@@ -12,6 +12,8 @@ ui/node_modules
 
 # testing
 /coverage
+/docker-compose.yml
+docker-compose.yml
 
 # next.js
 ui/.next/
