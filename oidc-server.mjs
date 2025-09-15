@@ -46,18 +46,18 @@ async function main() {
             url(ctx, interaction) {
                 return `/int/${interaction.uid}`;
             },
-            policy: async (ctx, interaction, runDefaultPolicy) => {
-                const result = await runDefaultPolicy();
-                if (result.prompt.name === 'consent') {
-                    const { oidc } = ctx;
-                    const grantId = oidc.session?.grantIdFor(oidc.params.client_id);
-                    if (grantId) {
-                        // грант уже был — пропускаем экран
-                        return { name: 'login' }; // любой «не consent», чтобы интеракция не требовала подтверждения
-                    }
-                }
-                return result;
-            },
+            policy: [
+                {
+                    name: 'login',
+                    requestable: true,
+                    details: (ctx, i) => ({ uid: i.uid }),
+                },
+                {
+                    name: 'consent',
+                    requestable: true,
+                    details: (ctx, i) => ({ uid: i.uid }),
+                },
+            ],
         },
         ttl: { Session: 60 * 60 * 24 * 7, Interaction: 60 * 10 },
         clients: [
