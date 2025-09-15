@@ -3,12 +3,17 @@ import 'dotenv/config';
 import http from 'node:http';
 import Provider from 'oidc-provider';
 import { generateKeyPair, exportJWK } from 'jose';
+import { Client as PgClient } from 'pg';
+import argon2 from 'argon2';
 import { parse } from 'node:url';
+import fs from 'node:fs';
 
 const ISSUER = process.env.ISSUER_URL; // http://localhost:3300/api/oidc
-const COOKIE_SECRET = process.env.COOKIE_SECRET; // dev-cookie-secret-change-me-very-long-1234567890
+const COOKIE_SECRET = process.env.COOKIE_SECRET;
+const JWKS_LOCATION = process.env.JWKS_LOCATION;
 if (!ISSUER) throw new Error('ISSUER_URL env is required');
 if (!COOKIE_SECRET) throw new Error('COOKIE_SECRET env is required');
+if (!JWKS_LOCATION) throw new Error('JWKS_LOCATION env is required');
 
 async function main() {
     // 1) Разово генерим приватный ключ (в проде сделаем постоянным)
@@ -18,6 +23,8 @@ async function main() {
     if (!priv.d) throw new Error('Expected private JWK with "d"');
 
     // 2) Мини-конфиг: dev-экраны включены, PKCE пока выключен (для клика мышкой)
+    const jwks = JSON.parse(fs.readFileSync(JWKS_LOCATION, 'utf8'));
+
     const configuration = {
         pkce: { required: () => false, methods: ['S256'] },
         features: { devInteractions: { enabled: false } },
@@ -36,10 +43,7 @@ async function main() {
                 return `/int/${interaction.uid}`;
             },
         },
-        ttl: {
-            Session: 60 * 10,      // 10 минут (подбери под себя)
-            Interaction: 60 * 5,   // 5 минут
-        },
+        ttl: { Session: 60 * 60 * 24 * 7, Interaction: 60 * 10 },
         clients: [
             {
                 client_id: 'demo-web',
@@ -52,7 +56,7 @@ async function main() {
             },
         ],
         // ВАЖНО: сюда кладём ПРИВАТНЫЙ ключ
-        jwks: { keys: [priv] },
+        jwks,
     };
 
     const provider = new Provider(ISSUER, configuration);
@@ -81,24 +85,6 @@ curl -X POST ${ISSUER}/token \\
                 let data = '';
                 req.on('data', (c) => { data += c; if (data.length > 1e6) req.destroy(); });
                 req.on('end', () => resolve(data));
-                req.on('error', reject);
-            });
-        }
-
-        async function parseBody(req) {
-            return await new Promise((resolve, reject) => {
-                let data = '';
-                req.on('data', (c) => { data += c; if (data.length > 1e6) req.destroy(); });
-                req.on('end', () => {
-                    const ct = (req.headers['content-type'] || '').toLowerCase();
-                    try {
-                        if (ct.includes('application/json')) {
-                            resolve(data ? JSON.parse(data) : {});
-                        } else {
-                            resolve(Object.fromEntries(new URLSearchParams(data)));
-                        }
-                    } catch (e) { reject(e); }
-                });
                 req.on('error', reject);
             });
         }
@@ -136,34 +122,46 @@ curl -X POST ${ISSUER}/token \\
                     // читаем тело
                     const raw = await readBody(req);
                     const ct = (req.headers['content-type'] || '').toLowerCase();
-                    let loginField = '';
-                    if (ct.includes('application/json')) {
-                        const json = raw ? JSON.parse(raw) : {};
-                        loginField = String(json.login || json.email || json.username || '').trim();
-                    } else {
-                        const p = new URLSearchParams(raw);
-                        loginField = String(p.get('login') || p.get('email') || p.get('username') || '').trim();
-                    }
+                    const form = ct.includes('application/json')
+                        ? (raw ? JSON.parse(raw) : {})
+                        : Object.fromEntries(new URLSearchParams(raw));
 
-                    if (!loginField) {
-                        console.warn('[login] missing login field');
+                    const email = String(form.login || form.email).toLowerCase().trim();
+                    const password = String(form.password || '').trim();
+
+                    if (!email || !password) {
                         res.writeHead(400, { 'content-type': 'application/json' });
-                        res.end(JSON.stringify({ error: 'invalid_request', message: 'login is required' }));
+                        res.end(JSON.stringify({ error: 'invalid_request', message: 'email & password required' }));
                         return;
                     }
 
-                    // тут позже будет реальная проверка пароля/БД
-                    const result = {
-                        login: {
-                            accountId: loginField, // это станет sub
-                            // remember: true,
-                        },
-                    };
+                    // ищем пользователя в БД
+                    const db = new PgClient({ connectionString: process.env.DATABASE_URL });
+                    await db.connect();
+                    const { rows } = await db.query(
+                        'SELECT id, password_hash FROM users WHERE email = $1',
+                        [email]
+                    );
+                    await db.end();
 
-                    // ВАЖНО: здесь НЕ зовём interactionDetails, прямо завершаем интеракцию.
+                    if (!rows[0]) {
+                        res.writeHead(400, { 'content-type': 'application/json' });
+                        res.end(JSON.stringify({ error: 'invalid_credentials' }));
+                        return;
+                    }
+
+                    // сравнение пароля с hash в БД
+                    const ok = await argon2.verify(rows[0].password_hash, password);
+                    if (!ok) {
+                        res.writeHead(400, { 'content-type': 'application/json' });
+                        res.end(JSON.stringify({ error: 'invalid_credentials' }));
+                        return;
+                    }
+
+                    // успех → sub = uuid из БД
+                    const result = { login: { accountId: rows[0].id } };
                     await provider.interactionFinished(req, res, result, { mergeWithLastSubmission: false });
-                    // 302 вернётся автоматом, дальше код не выполняется.
-                    console.log('[login] finished ok', { uidFromPath, accountId: loginField });
+                    console.log('[login] finished ok', { uidFromPath, accountId: rows[0].id });
                 } catch (e) {
                     console.error('[login] failed', e);
                     res.writeHead(400, { 'content-type': 'application/json' });

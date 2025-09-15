@@ -1,4 +1,4 @@
-const base = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+const base = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3300';
 const authorizeUrl =
   `${base}/api/oidc/auth`
   + `?client_id=demo-web`
@@ -17,6 +17,7 @@ export default function Home() {
         <tbody>
           <tr>
             <td><a href={authorizeUrl}>Войти</a></td>
+            <td><a href="/register">Регистрация</a></td>
             <td><a href={logoutUrl}>Выйти</a></td>
           </tr>
         </tbody>
