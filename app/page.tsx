@@ -1,8 +1,8 @@
 // app/page.tsx
 function buildAuthorizeUrl() {
-  const u = new URL('http://localhost:4000/auth'); // сразу на провайдера!
+  const u = new URL('http://localhost:4400/auth'); // сразу на провайдера!
   u.searchParams.set('client_id', 'demo-web');
-  u.searchParams.set('redirect_uri', 'http://localhost:3000/api/oidc/cb'); // callback на Next (3000)
+  u.searchParams.set('redirect_uri', 'http://localhost:3300/api/oidc/cb'); // callback на Next (3300)
   u.searchParams.set('response_type', 'code');
   u.searchParams.set('scope', 'openid profile email');
   u.searchParams.set('state', 'abc');

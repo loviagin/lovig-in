@@ -1,7 +1,7 @@
 // app/login/[uid]/page.tsx
 export default async function LoginPage({ params }: { params: Promise<{ uid: string }> }) {
     const { uid } = await params;
-    const action = `http://localhost:4000/interaction/${uid}/login`; // прямо на провайдера
+    const action = `http://localhost:4400/interaction/${uid}/login`; // прямо на провайдера
   
     return (
       <main style={{ maxWidth: 420, margin: '48px auto', fontFamily: 'system-ui, sans-serif' }}>

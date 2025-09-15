@@ -64,7 +64,7 @@ This is a [One Login](https://auth.lovig.in) project developed by [`LOVIGIN LTD`
    
    # OIDC Provider
    ISSUER=https://auth.lovig.in
-   PORT=3000
+   PORT=3300
    
    # JWT
    JWT_SECRET=your-super-secret-jwt-key

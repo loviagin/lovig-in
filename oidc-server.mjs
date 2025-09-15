@@ -5,7 +5,7 @@ import Provider from 'oidc-provider';
 import { generateKeyPair, exportJWK } from 'jose';
 import { parse } from 'node:url';
 
-const ISSUER = process.env.ISSUER_URL; // http://localhost:3000/api/oidc
+const ISSUER = process.env.ISSUER_URL; // http://localhost:3300/api/oidc
 // const COOKIE_SECRET = process.env.COOKIE_SECRET; // dev-cookie-secret-change-me-very-long-1234567890
 if (!ISSUER) throw new Error('ISSUER_URL env is required');
 // if (!COOKIE_SECRET) throw new Error('COOKIE_SECRET env is required');
@@ -24,7 +24,7 @@ async function main() {
         clients: [
             {
                 client_id: 'demo-web',
-                redirect_uris: ['http://localhost:3000/api/oidc/cb'],
+                redirect_uris: ['http://localhost:3300/api/oidc/cb'],
                 response_types: ['code'],
                 grant_types: ['authorization_code', 'refresh_token'],
                 token_endpoint_auth_method: 'none',
@@ -60,7 +60,7 @@ curl -X POST ${ISSUER}/token \\
     });
 
     server.listen(4400, () => {
-        console.log('OIDC listening on http://localhost:4000  (issuer =', ISSUER, ')');
+        console.log('OIDC listening on http://localhost:4400  (issuer =', ISSUER, ')');
     });
 }
 

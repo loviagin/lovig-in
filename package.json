@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"next dev -p 3000\" \"node oidc-server.mjs\"",
+    "dev": "concurrently \"next dev -p 3300\" \"node oidc-server.mjs\"",
     "build": "next build",
     "start": "next start -p 3300",
     "test:e2e": "playwright test",
