@@ -73,7 +73,7 @@ async function main() {
             {
                 client_id: 'demo-ios',
                 redirect_uris: ['learnsy://test'],
-                post_logout_redirect_uris: ['learnsy://test'],
+                post_logout_redirect_uris: ['https://auth.lovig.in'],
                 response_types: ['code'],
                 grant_types: ['authorization_code', 'refresh_token'],
                 token_endpoint_auth_method: 'none',
@@ -123,14 +123,9 @@ async function main() {
         if (pathname === '/cb') {
             res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
             res.end(`Callback OK
-code=${query.code}
-state=${query.state}
-
-Скопируй code — обменяй на токены:
-curl -X POST ${ISSUER}/token \\
-  -H "Content-Type: application/x-www-form-urlencoded" \\
-  -d "grant_type=authorization_code&client_id=demo-web&redirect_uri=${ISSUER.replace('/api/oidc', '')}/api/oidc/cb&code=ВСТАВЬ_CODE"
-`);
+                        code=${query.code}
+                        state=${query.state}
+            `);
             return;
         }
 
