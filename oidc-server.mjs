@@ -59,7 +59,7 @@ curl -X POST ${ISSUER}/token \\
         return provider.callback()(req, res);
     });
 
-    server.listen(4000, () => {
+    server.listen(4400, () => {
         console.log('OIDC listening on http://localhost:4000  (issuer =', ISSUER, ')');
     });
 }
