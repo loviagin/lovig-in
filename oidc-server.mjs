@@ -20,10 +20,10 @@ async function main() {
     const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
     // ===== NEW: interactionPolicy (login+consent по умолчанию) + наш prompt "signup"
-    const policy = interactionPolicy.base();
-    const { Prompt } = interactionPolicy;
-    const signupPrompt = new Prompt({ name: 'signup', requestable: true });
-    policy.add(signupPrompt);
+    // const policy = interactionPolicy.base();
+    // const { Prompt } = interactionPolicy;
+    // const signupPrompt = new Prompt({ name: 'signup', requestable: true });
+    // policy.add(signupPrompt);
     // ===========================================================
 
     const configuration = {
@@ -50,7 +50,7 @@ async function main() {
             long: { secure: true, sameSite: 'lax', domain: 'auth.lovig.in', path: '/' },
         },
         interactions: {
-            policy, // <— ПОДКЛЮЧИЛИ НОВУЮ POLICY
+            // policy, // <— ПОДКЛЮЧИЛИ НОВУЮ POLICY
             url(ctx, interaction) {
                 // <— БЫЛО /int/:uid, но у тебя ниже хендлеры /interaction/:uid
                 return `/interaction/${interaction.uid}`;
