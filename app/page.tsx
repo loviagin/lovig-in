@@ -16,11 +16,7 @@ export default function Home() {
       <table>
         <tbody>
           <tr>
-            <td>authorizeUrl</td>
             <td><a href={authorizeUrl}>Войти</a></td>
-          </tr>
-          <tr>
-            <td>logoutUrl</td>
             <td><a href={logoutUrl}>Выйти</a></td>
           </tr>
         </tbody>
