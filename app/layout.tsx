@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import React from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LOVIGIN One Login",
-  description: "One Login App for Users Authentication",
+  title: "LOVIGIN ONE LOGIN",
+  description: "One Login Page for all LOVIGIN Apps",
 };
 
 export default function RootLayout({
