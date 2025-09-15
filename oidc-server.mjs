@@ -70,6 +70,14 @@ async function main() {
                 token_endpoint_auth_method: 'none',
                 id_token_signed_response_alg: 'ES256',
             },
+            {
+                client_id: 'demo-ios',
+                redirect_uris: ['learnsy://test'], // кастомная схема!
+                response_types: ['code'],
+                grant_types: ['authorization_code', 'refresh_token'],
+                token_endpoint_auth_method: 'none',
+                id_token_signed_response_alg: 'ES256',
+            },
         ],
         claims: {
             openid: ['sub'],
