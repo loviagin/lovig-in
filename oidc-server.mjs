@@ -37,7 +37,7 @@ async function main() {
             {
                 client_id: 'demo-web',
                 redirect_uris: ['https://auth.lovig.in/api/oidc/cb'],
-                post_logout_redirect_uris: ['https://auth.lovig.in'], 
+                post_logout_redirect_uris: ['https://auth.lovig.in'],
                 response_types: ['code'],
                 grant_types: ['authorization_code', 'refresh_token'],
                 token_endpoint_auth_method: 'none',
@@ -114,24 +114,56 @@ curl -X POST ${ISSUER}/token \\
         if (req.method === 'POST' && m2) {
             (async () => {
                 try {
-                    const body = await parseBody(req);          // { login, password? }
-                    const accountId = String(body.login || '').trim();
-                    if (!accountId) {
+                    // 0) Привязываем запрос к интеракции (важно для cookie/ctx)
+                    const details = await provider.interactionDetails(req, res);
+                    const expectedUid = m2[1];
+                    if (details.uid !== expectedUid) {
+                        throw new Error('interaction uid mismatch');
+                    }
+                    if (details.prompt?.name !== 'login') {
+                        // например, если юзер уже залогинен
+                        // можно сразу завершить без login-результата
+                        await provider.interactionFinished(req, res, {}, { mergeWithLastSubmission: true });
+                        return;
+                    }
+
+                    // 1) Читаем тело формы аккуратно
+                    const ct = (req.headers['content-type'] || '').toLowerCase();
+                    let bodyText = '';
+                    await new Promise((resolve, reject) => {
+                        req.on('data', (c) => { bodyText += c; if (bodyText.length > 1e6) req.destroy(); });
+                        req.on('end', resolve);
+                        req.on('error', reject);
+                    });
+
+                    let loginField = '';
+                    if (ct.includes('application/json')) {
+                        const json = bodyText ? JSON.parse(bodyText) : {};
+                        loginField = String(json.login || json.email || json.username || '').trim();
+                    } else {
+                        const p = new URLSearchParams(bodyText);
+                        loginField = String(
+                            p.get('login') || p.get('email') || p.get('username') || ''
+                        ).trim();
+                    }
+
+                    if (!loginField) {
+                        // отдадим понятную ошибку
                         res.writeHead(400, { 'content-type': 'application/json' });
                         res.end(JSON.stringify({ error: 'invalid_request', message: 'login is required' }));
                         return;
                     }
 
-                    // тут позже будет твоя проверка в БД; пока просто принимаем любой логин
+                    // TODO: здесь позже проверка пароля/БД
                     const result = {
                         login: {
-                            accountId,              // главный идентификатор пользователя
-                            // remember: true,      // если хочешь «запомнить»
+                            accountId: loginField, // это будет sub
+                            // remember: true,
                         },
                     };
 
                     await provider.interactionFinished(req, res, result, { mergeWithLastSubmission: false });
-                    // ВАЖНО: interactionFinished сам отправит 302-редирект обратно в /auth flow.
+                    // 302 вернёт пользователю автоматом
                 } catch (e) {
                     res.writeHead(400, { 'content-type': 'application/json' });
                     res.end(JSON.stringify({ error: 'login_failed', message: String(e?.message || e) }));
