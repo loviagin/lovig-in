@@ -173,17 +173,31 @@ async function main() {
             return;
         }
 
-        // GET /interaction/:uid/details -> JSON (Next забирает детали интеракции)
+        // GET /interaction/:uid/details -> JSON
         const m1d = pathname.match(/^\/interaction\/([^/]+)\/details$/);
         if (req.method === 'GET' && m1d) {
             (async () => {
                 try {
                     const details = await provider.interactionDetails(req, res);
+                    const params = details.params || {};
+                    const session = details.session || null;
+
+                    // <-- ПАТЧ: если клиент запросил prompt=signup, а сессии нет,
+                    //           отдаём фронту signup вместо login (без interactionFinished)
+                    let prompt = details.prompt;
+                    const wantsSignup = typeof params.prompt === 'string' &&
+                        params.prompt.split(/\s+/).includes('signup');
+                    const hasLoginSession = Boolean(session && session.accountId);
+
+                    if (prompt?.name === 'login' && wantsSignup && !hasLoginSession) {
+                        prompt = { ...prompt, name: 'signup' };
+                    }
+
                     const out = {
                         uid: details.uid,
-                        prompt: details.prompt,          // { name: 'login' | 'signup' | 'consent' }
-                        params: details.params,          // client_id, scope, redirect_uri ...
-                        session: details.session || null,
+                        prompt,        // { name: 'login' | 'signup' | 'consent', ... } (с учётом форса)
+                        params,        // client_id, scope, redirect_uri, prompt, ...
+                        session,
                     };
                     res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
                     res.end(JSON.stringify(out));
