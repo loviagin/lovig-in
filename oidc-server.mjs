@@ -74,10 +74,10 @@ async function main() {
                 client_id: 'demo-ios',
                 application_type: 'native',
                 redirect_uris: ['com.lovigin.ios.Skillify://oidc'],
-                post_logout_redirect_uris: ['https://auth.lovig.in/logout-ok'],
-                grant_types: ['authorization_code', 'refresh_token'],
-                response_types: ['code'],
+                post_logout_redirect_uris: ['https://auth.lovig.in/logout-ok'], // web-URL
                 token_endpoint_auth_method: 'none',
+                response_types: ['code'],
+                grant_types: ['authorization_code', 'refresh_token'],
                 id_token_signed_response_alg: 'ES256',
             },
         ],
