@@ -27,7 +27,15 @@ async function main() {
             },
         },
         cookies: {
+            names: {
+                // можно не менять имена, но пусть будут явными
+                interaction: 'oidc:interaction',
+                session: 'oidc:session',
+            },
             keys: [COOKIE_SECRET], // подпись cookie
+            // Короткие и длинные куки всегда на твоём домене, под HTTPS
+            short: { secure: true, sameSite: 'lax', domain: 'auth.lovig.in' },
+            long: { secure: true, sameSite: 'lax', domain: 'auth.lovig.in' },
         },
         ttl: {
             Session: 60,      // 10 минут (подбери под себя)
