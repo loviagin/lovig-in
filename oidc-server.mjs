@@ -21,21 +21,20 @@ async function main() {
     const configuration = {
         pkce: { required: () => false, methods: ['S256'] },
         features: { devInteractions: { enabled: false } },
+        cookies: {
+            names: {
+                interaction: 'oidc:interaction',
+                session: 'oidc:session',
+            },
+            keys: [COOKIE_SECRET], // подпись
+            // cookie должны быть видны как для /api/oidc/*, так и для /interaction/*
+            short: { secure: true, sameSite: 'lax', domain: 'auth.lovig.in', path: '/' },
+            long: { secure: true, sameSite: 'lax', domain: 'auth.lovig.in', path: '/' },
+        },
         interactions: {
             url(ctx, interaction) {
                 return `/int/${interaction.uid}`;
             },
-        },
-        cookies: {
-            names: {
-                // можно не менять имена, но пусть будут явными
-                interaction: 'oidc:interaction',
-                session: 'oidc:session',
-            },
-            keys: [COOKIE_SECRET], // подпись cookie
-            // Короткие и длинные куки всегда на твоём домене, под HTTPS
-            short: { secure: true, sameSite: 'lax', domain: 'auth.lovig.in' },
-            long: { secure: true, sameSite: 'lax', domain: 'auth.lovig.in' },
         },
         ttl: {
             Session: 60,      // 10 минут (подбери под себя)
