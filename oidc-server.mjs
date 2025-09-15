@@ -37,8 +37,8 @@ async function main() {
             },
         },
         ttl: {
-            Session: 60,      // 10 минут (подбери под себя)
-            Interaction: 60,   // 5 минут
+            Session: 60 * 10,      // 10 минут (подбери под себя)
+            Interaction: 60 * 5,   // 5 минут
         },
         clients: [
             {
