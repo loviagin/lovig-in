@@ -50,10 +50,9 @@ async function main() {
             long: { secure: true, sameSite: 'lax', domain: 'auth.lovig.in', path: '/' },
         },
         interactions: {
-            // policy, // <— ПОДКЛЮЧИЛИ НОВУЮ POLICY
-            url(ctx, interaction) {
-                // <— БЫЛО /int/:uid, но у тебя ниже хендлеры /interaction/:uid
-                return `/interaction/${interaction.uid}`;
+            url(ctx, i) {
+                const wantsSignup = ctx.oidc?.params?.screen === 'signup';
+                return `/interaction/${i.uid}${wantsSignup ? '?screen=signup' : ''}`;
             },
         },
         ttl: { Session: 60 * 60 * 24 * 7, Interaction: 60 * 10 },
@@ -167,9 +166,20 @@ async function main() {
         // GET /interaction/:uid  -> редирект на Next
         const m1 = pathname.match(/^\/interaction\/([^/]+)$/);
         if (req.method === 'GET' && m1) {
-            const uid = m1[1];
-            res.writeHead(302, { Location: `/int/${uid}` });
-            res.end();
+            (async () => {
+                try {
+                    const details = await provider.interactionDetails(req, res);
+                    const wantsSignup =
+                        typeof details.params?.screen === 'string' &&
+                        details.params.screen === 'signup';
+                    const extra = wantsSignup ? '?screen=signup' : '';
+                    res.writeHead(302, { Location: `/int/${details.uid}${extra}` });
+                    res.end();
+                } catch {
+                    res.writeHead(302, { Location: `/int/${m1[1]}` });
+                    res.end();
+                }
+            })();
             return;
         }
 
@@ -185,8 +195,9 @@ async function main() {
                     // <-- ПАТЧ: если клиент запросил prompt=signup, а сессии нет,
                     //           отдаём фронту signup вместо login (без interactionFinished)
                     let prompt = details.prompt;
-                    const wantsSignup = typeof params.prompt === 'string' &&
-                        params.prompt.split(/\s+/).includes('signup');
+                    const wantsSignup =
+                        (typeof params.screen === 'string' && params.screen === 'signup') ||
+                        false;
                     const hasLoginSession = Boolean(session && session.accountId);
 
                     if (prompt?.name === 'login' && wantsSignup && !hasLoginSession) {
