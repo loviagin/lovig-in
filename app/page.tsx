@@ -13,9 +13,18 @@ const logoutUrl = `${base}/api/oidc/session/end?post_logout_redirect_uri=${encod
 export default function Home() {
   return (
     <main>
-      <a href={authorizeUrl}>Войти</a>
-      <br className="mb-4" />
-      <a href={logoutUrl}>Выйти</a>
+      <table>
+        <tbody>
+          <tr>
+            <td>authorizeUrl</td>
+            <td><a href={authorizeUrl}>Войти</a></td>
+          </tr>
+          <tr>
+            <td>logoutUrl</td>
+            <td><a href={logoutUrl}>Выйти</a></td>
+          </tr>
+        </tbody>
+      </table>      
     </main>
   );
 }

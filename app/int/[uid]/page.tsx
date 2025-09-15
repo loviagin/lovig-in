@@ -1,71 +1,105 @@
 // app/int/[uid]/page.tsx
-import { cookies } from 'next/headers';
-export const dynamic = 'force-dynamic';
+'use client';
+
+import { useEffect, useState } from 'react';
 
 type IntDetails = {
-    uid: string;
-    prompt: { name: 'login' | 'consent' | string };
-    params: Record<string, string>;
-    session?: { accountId?: string } | null;
+  uid: string;
+  prompt: { name: 'login' | 'consent' | string };
+  params: Record<string, string>;
+  session?: { accountId?: string } | null;
 };
 
-async function getDetails(uid: string): Promise<IntDetails> {
-    const base = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+export default function IntPage({ params }: { params: { uid: string } }) {
+  const { uid } = params;
+  const [details, setDetails] = useState<IntDetails | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    // ВАЖНО: пробрасываем куки текущего запроса
-    const cookieHeader = cookies().toString();
+  useEffect(() => {
+    let abort = false;
 
-    const res = await fetch(`${base}/interaction/${uid}`, {
-        cache: 'no-store',
-        headers: {
-            // interaction cookie попадёт в провайдер
-            cookie: cookieHeader,
-        },
-    });
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-    if (!res.ok) {
-        throw new Error(`Failed to load interaction details: ${res.status}`);
-    }
-    return (await res.json()) as IntDetails;
-}
+        // критично: credentials: 'include' — чтобы куки пришли И УСТАНОВИЛИСЬ в браузер
+        const res = await fetch(`/interaction/${uid}`, {
+          credentials: 'include',
+          cache: 'no-store',
+        });
 
-export default async function IntPage({
-    params,
-}: {
-    params: Promise<{ uid: string }>;
-}) {
-    const { uid } = await params;
-    const details = await getDetails(uid);
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`GET /interaction failed: ${res.status} ${text}`);
+        }
 
-    if (details.prompt.name === 'login') {
-        return (
-            <main style={{ maxWidth: 420, margin: '40px auto', fontFamily: 'system-ui' }}>
-                <h1>Sign in</h1>
-                <form method="post" action={`/interaction/${uid}/login`} style={{ display: 'grid', gap: 12 }}>
-                    <input name="login" placeholder="email or username" required
-                        style={{ padding: 10, border: '1px solid #ccc', borderRadius: 8 }} />
-                    <input name="password" type="password" placeholder="password (optional now)"
-                        style={{ padding: 10, border: '1px solid #ccc', borderRadius: 8 }} />
-                    <button type="submit" style={{ padding: 10, borderRadius: 8, background: '#2563eb', color: '#fff' }}>
-                        Sign in
-                    </button>
-                </form>
-            </main>
-        );
-    }
+        const data = (await res.json()) as IntDetails;
+        if (!abort) setDetails(data);
+      } catch (e: any) {
+        if (!abort) setError(String(e?.message || e));
+      } finally {
+        if (!abort) setLoading(false);
+      }
+    })();
 
+    return () => {
+      abort = true;
+    };
+  }, [uid]);
+
+  if (loading) {
+    return <main style={{ padding: 24, fontFamily: 'system-ui' }}>Loading…</main>;
+  }
+  if (error) {
     return (
-        <main style={{ maxWidth: 520, margin: '40px auto', fontFamily: 'system-ui' }}>
-            <h1>Authorize</h1>
-            <p>
-                App <b>{details.params.client_id}</b> requests:&nbsp;
-                <code>{details.params.scope ?? 'openid'}</code>
-            </p>
-            <form method="post" action={`/interaction/${uid}/confirm`}>
-                <button type="submit" style={{ padding: 10, borderRadius: 8, background: '#2563eb', color: '#fff' }}>
-                    Continue
-                </button>
-            </form>
-        </main>
+      <main style={{ padding: 24, fontFamily: 'system-ui', color: 'crimson' }}>
+        {error}
+      </main>
     );
+  }
+  if (!details) return null;
+
+  if (details.prompt.name === 'login') {
+    return (
+      <main style={{ maxWidth: 420, margin: '40px auto', fontFamily: 'system-ui' }}>
+        <h1>Sign in</h1>
+        {/* форма идёт НАПРЯМУЮ в провайдера; кука уже есть в браузере */}
+        <form method="post" action={`/interaction/${uid}/login`} style={{ display: 'grid', gap: 12 }}>
+          <input
+            name="login"
+            placeholder="email or username"
+            required
+            style={{ padding: 10, border: '1px solid #ccc', borderRadius: 8 }}
+          />
+          <input
+            name="password"
+            type="password"
+            placeholder="password (optional now)"
+            style={{ padding: 10, border: '1px solid #ccc', borderRadius: 8 }}
+          />
+          <button type="submit" style={{ padding: 10, borderRadius: 8, background: '#2563eb', color: '#fff' }}>
+            Sign in
+          </button>
+        </form>
+      </main>
+    );
+  }
+
+  // consent
+  return (
+    <main style={{ maxWidth: 520, margin: '40px auto', fontFamily: 'system-ui' }}>
+      <h1>Authorize</h1>
+      <p>
+        App <b>{details.params.client_id}</b> requests:&nbsp;
+        <code>{details.params.scope ?? 'openid'}</code>
+      </p>
+      <form method="post" action={`/interaction/${uid}/confirm`}>
+        <button type="submit" style={{ padding: 10, borderRadius: 8, background: '#2563eb', color: '#fff' }}>
+          Continue
+        </button>
+      </form>
+    </main>
+  );
 }
