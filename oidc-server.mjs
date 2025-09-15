@@ -109,6 +109,30 @@ async function main() {
     };
 
     const provider = new Provider(ISSUER, configuration);
+    // подробные события
+    provider.on('authorization.error', (ctx, err) => {
+        console.error('[authorization.error]', err?.message, {
+            client_id: ctx.oidc?.params?.client_id,
+            redirect_uri: ctx.oidc?.params?.redirect_uri,
+            scope: ctx.oidc?.params?.scope,
+            response_type: ctx.oidc?.params?.response_type,
+        });
+    });
+
+    provider.on('server_error', (ctx, err) => {
+        console.error('[server_error]', err?.stack || err);
+    });
+
+    // более говорящий экран ошибки
+    configuration.renderError = (ctx, out, err) => {
+        ctx.type = 'text/plain; charset=utf-8';
+        ctx.body = `OIDC error
+  name=${err?.name}
+  message=${err?.message}
+  detail=${err?.error_description || ''}
+  state=${ctx.oidc?.params?.state || '-'}
+  client=${ctx.oidc?.params?.client_id || '-'}`;
+    };
     provider.proxy = true;
 
     // 3) HTTP: перехватываем только /cb, остальное — в provider.callback()
