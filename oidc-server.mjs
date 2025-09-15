@@ -1,7 +1,7 @@
 // oidc-server.mjs
 import 'dotenv/config';
 import http from 'node:http';
-import Provider, { interactionPolicy } from 'oidc-provider'; // <— ДОБАВИЛ interactionPolicy
+import Provider from 'oidc-provider';
 import { Pool } from 'pg';
 import argon2 from 'argon2';
 import { parse } from 'node:url';
@@ -18,13 +18,6 @@ if (!JWKS_LOCATION) throw new Error('JWKS_LOCATION env is required');
 async function main() {
     const jwks = JSON.parse(fs.readFileSync(JWKS_LOCATION, 'utf8'));
     const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-
-    // ===== NEW: interactionPolicy (login+consent по умолчанию) + наш prompt "signup"
-    // const policy = interactionPolicy.base();
-    // const { Prompt } = interactionPolicy;
-    // const signupPrompt = new Prompt({ name: 'signup', requestable: true });
-    // policy.add(signupPrompt);
-    // ===========================================================
 
     const configuration = {
         pkce: { required: () => true, methods: ['S256'] },
@@ -219,22 +212,6 @@ async function main() {
             })();
             return;
         }
-
-        // (опц.) мягкий переход login -> signup в той же интеракции:
-        // const mGo = pathname.match(/^\/interaction\/([^/]+)\/goto-signup$/);
-        // if (req.method === 'GET' && mGo) {
-        //     (async () => {
-        //         try {
-        //             await provider.interactionDetails(req, res); // проверка что интеракция живая
-        //             const result = { prompt: { name: 'signup' } };
-        //             await provider.interactionFinished(req, res, result, { mergeWithLastSubmission: true });
-        //         } catch (e) {
-        //             res.writeHead(400, { 'content-type': 'application/json' });
-        //             res.end(JSON.stringify({ error: 'switch_failed', message: String(e?.message || e) }));
-        //         }
-        //     })();
-        //     return;
-        // }
 
         // ==== POST /interaction/:uid/login — логин
         const m2 = pathname.match(/^\/interaction\/([^/]+)\/login$/);
