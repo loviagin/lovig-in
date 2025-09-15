@@ -24,7 +24,7 @@ async function main() {
         clients: [
             {
                 client_id: 'demo-web',
-                redirect_uris: ['http://localhost:3300/api/oidc/cb'],
+                redirect_uris: ['https://auth.lovig.in/api/oidc/cb'],
                 response_types: ['code'],
                 grant_types: ['authorization_code', 'refresh_token'],
                 token_endpoint_auth_method: 'none',
