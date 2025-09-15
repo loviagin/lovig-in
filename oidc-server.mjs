@@ -72,7 +72,8 @@ async function main() {
             },
             {
                 client_id: 'demo-ios',
-                redirect_uris: ['learnsy://test'], // кастомная схема!
+                redirect_uris: ['learnsy://test'],
+                post_logout_redirect_uris: ['learnsy://test'],
                 response_types: ['code'],
                 grant_types: ['authorization_code', 'refresh_token'],
                 token_endpoint_auth_method: 'none',
