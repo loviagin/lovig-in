@@ -15,9 +15,10 @@ export default function IntClient({ uid }: { uid: string }) {
   const [details, setDetails] = useState<IntDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
   const sp = useSearchParams();
-  const mode = sp.get('mode'); // "signup" | null
   const router = useRouter();
+  const mode = sp.get('mode'); // "signup" | null
 
   useEffect(() => {
     let abort = false;
@@ -25,10 +26,7 @@ export default function IntClient({ uid }: { uid: string }) {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch(`/interaction/${uid}/details`, {
-          credentials: 'include',
-          cache: 'no-store',
-        });
+        const res = await fetch(`/interaction/${uid}/details`, { credentials: 'include', cache: 'no-store' });
         if (!res.ok) throw new Error(`GET /interaction/${uid}/details failed: ${res.status}`);
         const data = (await res.json()) as IntDetails;
         if (!abort) setDetails(data);
@@ -50,10 +48,17 @@ export default function IntClient({ uid }: { uid: string }) {
   if (error)   return <main style={{ ...shell, color: 'crimson' }}>{error}</main>;
   if (!details) return null;
 
-  // РЕЖИМЫ:
-  // - signup показываем либо если prompt=signup, либо если явно ?mode=signup
-  const showSignup = details.prompt.name === 'signup' || mode === 'signup';
-  const showLogin  = !showSignup && details.prompt.name === 'login';
+  const prompt = details.prompt.name;
+
+  // ВАЖНО:
+  // - Разрешаем форс-сигнап через ?mode=signup ТОЛЬКО когда текущий prompt = login.
+  // - Если провайдер уже выдал signup — показываем signup.
+  // - Если провайдер выдал consent — НИКОГДА не показываем signup, идём по consent.
+  const showSignup =
+    prompt === 'signup' || (prompt === 'login' && mode === 'signup');
+
+  const showLogin =
+    prompt === 'login' && !showSignup;
 
   if (showLogin) {
     return (
@@ -65,7 +70,7 @@ export default function IntClient({ uid }: { uid: string }) {
           <button type="submit" style={btnPri}>Sign in</button>
         </form>
 
-        {/* Простой переключатель на signup без завершения интеракции */}
+        {/* Переключение на форму регистрации без завершения интеракции */}
         <a
           href={`?mode=signup`}
           onClick={(e) => { e.preventDefault(); router.replace(`?mode=signup`); }}
@@ -91,12 +96,13 @@ export default function IntClient({ uid }: { uid: string }) {
     );
   }
 
-  // consent
+  // CONSENT (или любой другой prompt, если появится)
   return (
     <main style={{ ...shell, maxWidth: 520 }}>
       <h1>Authorize</h1>
       <p>
-        App <b>{details.params.client_id}</b> requests: <code>{details.params.scope ?? 'openid'}</code>
+        App <b>{details.params.client_id}</b> requests:&nbsp;
+        <code>{details.params.scope ?? 'openid'}</code>
       </p>
       <form method="post" action={`/interaction/${uid}/confirm`}>
         <button type="submit" style={btnPri}>Continue</button>
