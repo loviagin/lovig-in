@@ -1,6 +1,8 @@
+// app/int/[uid]/IntClient.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 type IntDetails = {
   uid: string;
@@ -13,6 +15,9 @@ export default function IntClient({ uid }: { uid: string }) {
   const [details, setDetails] = useState<IntDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const sp = useSearchParams();
+  const mode = sp.get('mode'); // "signup" | null
+  const router = useRouter();
 
   useEffect(() => {
     let abort = false;
@@ -20,14 +25,11 @@ export default function IntClient({ uid }: { uid: string }) {
       try {
         setLoading(true);
         setError(null);
-
-        // ВАЖНО: берем детали здесь
         const res = await fetch(`/interaction/${uid}/details`, {
           credentials: 'include',
           cache: 'no-store',
         });
         if (!res.ok) throw new Error(`GET /interaction/${uid}/details failed: ${res.status}`);
-
         const data = (await res.json()) as IntDetails;
         if (!abort) setDetails(data);
       } catch (e: unknown) {
@@ -48,39 +50,34 @@ export default function IntClient({ uid }: { uid: string }) {
   if (error)   return <main style={{ ...shell, color: 'crimson' }}>{error}</main>;
   if (!details) return null;
 
-  // LOGIN
-  if (details.prompt.name === 'login') {
+  // РЕЖИМЫ:
+  // - signup показываем либо если prompt=signup, либо если явно ?mode=signup
+  const showSignup = details.prompt.name === 'signup' || mode === 'signup';
+  const showLogin  = !showSignup && details.prompt.name === 'login';
+
+  if (showLogin) {
     return (
       <main style={shell}>
         <h1>Sign in</h1>
         <form method="post" action={`/interaction/${uid}/login`} style={{ display: 'grid', gap: 12 }}>
-          <input
-            name="email" // сервер читает и email, и login — оба ок
-            placeholder="email"
-            type="email"
-            required
-            style={input}
-            autoComplete="email"
-          />
-          <input
-            name="password"
-            type="password"
-            placeholder="password"
-            required
-            style={input}
-            autoComplete="current-password"
-          />
+          <input name="email" type="email" placeholder="email" required style={input} autoComplete="email" />
+          <input name="password" type="password" placeholder="password" required style={input} autoComplete="current-password" />
           <button type="submit" style={btnPri}>Sign in</button>
         </form>
 
-        {/* Переход в signup В РАМКАХ ЭТОЙ ЖЕ интеракции */}
-        <a href={`/interaction/${uid}/goto-signup`} style={btnSec}>Create account</a>
+        {/* Простой переключатель на signup без завершения интеракции */}
+        <a
+          href={`?mode=signup`}
+          onClick={(e) => { e.preventDefault(); router.replace(`?mode=signup`); }}
+          style={btnSec}
+        >
+          Create account
+        </a>
       </main>
     );
   }
 
-  // SIGNUP
-  if (details.prompt.name === 'signup') {
+  if (showSignup) {
     return (
       <main style={shell}>
         <h1>Create account</h1>
@@ -94,13 +91,12 @@ export default function IntClient({ uid }: { uid: string }) {
     );
   }
 
-  // CONSENT
+  // consent
   return (
     <main style={{ ...shell, maxWidth: 520 }}>
       <h1>Authorize</h1>
       <p>
-        App <b>{details.params.client_id}</b> requests:&nbsp;
-        <code>{details.params.scope ?? 'openid'}</code>
+        App <b>{details.params.client_id}</b> requests: <code>{details.params.scope ?? 'openid'}</code>
       </p>
       <form method="post" action={`/interaction/${uid}/confirm`}>
         <button type="submit" style={btnPri}>Continue</button>

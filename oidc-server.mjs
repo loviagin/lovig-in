@@ -196,20 +196,20 @@ async function main() {
         }
 
         // (опц.) мягкий переход login -> signup в той же интеракции:
-        const mGo = pathname.match(/^\/interaction\/([^/]+)\/goto-signup$/);
-        if (req.method === 'GET' && mGo) {
-            (async () => {
-                try {
-                    await provider.interactionDetails(req, res); // проверка что интеракция живая
-                    const result = { prompt: { name: 'signup' } };
-                    await provider.interactionFinished(req, res, result, { mergeWithLastSubmission: true });
-                } catch (e) {
-                    res.writeHead(400, { 'content-type': 'application/json' });
-                    res.end(JSON.stringify({ error: 'switch_failed', message: String(e?.message || e) }));
-                }
-            })();
-            return;
-        }
+        // const mGo = pathname.match(/^\/interaction\/([^/]+)\/goto-signup$/);
+        // if (req.method === 'GET' && mGo) {
+        //     (async () => {
+        //         try {
+        //             await provider.interactionDetails(req, res); // проверка что интеракция живая
+        //             const result = { prompt: { name: 'signup' } };
+        //             await provider.interactionFinished(req, res, result, { mergeWithLastSubmission: true });
+        //         } catch (e) {
+        //             res.writeHead(400, { 'content-type': 'application/json' });
+        //             res.end(JSON.stringify({ error: 'switch_failed', message: String(e?.message || e) }));
+        //         }
+        //     })();
+        //     return;
+        // }
 
         // ==== POST /interaction/:uid/login — логин
         const m2 = pathname.match(/^\/interaction\/([^/]+)\/login$/);
