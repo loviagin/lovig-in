@@ -10,11 +10,13 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
+# internal
 nginx.conf
 /test-results
 deploy.sh
+
+# testing
+/coverage
 
 # next.js
 /.next/
