@@ -14,7 +14,7 @@ export default function Home() {
   return (
     <main>
       <a href={authorizeUrl}>Войти</a>
-      <br />
+      <br className="mb-4" />
       <a href={logoutUrl}>Выйти</a>
     </main>
   );
