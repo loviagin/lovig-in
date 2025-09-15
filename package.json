@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start -p 3300",
     "test:e2e": "playwright test",
+    "deploy": "bash ./deploy.sh",
+    "deploy:m": "bash ./deploy.sh",
     "lint": "eslint"
   },
   "dependencies": {

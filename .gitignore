@@ -14,6 +14,7 @@
 /coverage
 nginx.conf
 /test-results
+deploy.sh
 
 # next.js
 /.next/
