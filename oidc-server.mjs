@@ -46,18 +46,18 @@ async function main() {
             url(ctx, interaction) {
                 return `/int/${interaction.uid}`;
             },
-            policy: [
-                {
-                    name: 'login',
-                    requestable: true,
-                    details: (ctx, i) => ({ uid: i.uid }),
-                },
-                {
-                    name: 'consent',
-                    requestable: true,
-                    details: (ctx, i) => ({ uid: i.uid }),
-                },
-            ],
+            // policy: [
+            //     {
+            //         name: 'login',
+            //         requestable: true,
+            //         details: (ctx, i) => ({ uid: i.uid }),
+            //     },
+            //     {
+            //         name: 'consent',
+            //         requestable: true,
+            //         details: (ctx, i) => ({ uid: i.uid }),
+            //     },
+            // ],
         },
         ttl: { Session: 60 * 60 * 24 * 7, Interaction: 60 * 10 },
         clients: [
