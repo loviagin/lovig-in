@@ -72,11 +72,12 @@ async function main() {
             },
             {
                 client_id: 'demo-ios',
-                redirect_uris: ['learnsy://test'],
-                post_logout_redirect_uris: ['https://auth.lovig.in'],
+                application_type: 'native',                   // ← это главное
+                redirect_uris: ['learnsy://test'],           // кастомная схема теперь ок
+                post_logout_redirect_uris: ['https://auth.lovig.in'], // только web-URL
                 response_types: ['code'],
                 grant_types: ['authorization_code', 'refresh_token'],
-                token_endpoint_auth_method: 'none',
+                token_endpoint_auth_method: 'none',           // публичный клиент
                 id_token_signed_response_alg: 'ES256',
             },
         ],
