@@ -69,6 +69,15 @@ curl -X POST ${ISSUER}/token \\
             return;
         }
 
+        function readBody(req) {
+            return new Promise((resolve, reject) => {
+                let data = '';
+                req.on('data', (c) => { data += c; if (data.length > 1e6) req.destroy(); });
+                req.on('end', () => resolve(data));
+                req.on('error', reject);
+            });
+        }
+
         async function parseBody(req) {
             return await new Promise((resolve, reject) => {
                 let data = '';
@@ -113,58 +122,43 @@ curl -X POST ${ISSUER}/token \\
         const m2 = pathname.match(/^\/interaction\/([^/]+)\/login$/);
         if (req.method === 'POST' && m2) {
             (async () => {
+                const uidFromPath = m2[1];
                 try {
-                    // 0) Привязываем запрос к интеракции (важно для cookie/ctx)
-                    const details = await provider.interactionDetails(req, res);
-                    const expectedUid = m2[1];
-                    if (details.uid !== expectedUid) {
-                        throw new Error('interaction uid mismatch');
-                    }
-                    if (details.prompt?.name !== 'login') {
-                        // например, если юзер уже залогинен
-                        // можно сразу завершить без login-результата
-                        await provider.interactionFinished(req, res, {}, { mergeWithLastSubmission: true });
-                        return;
-                    }
+                    console.log('[login] POST', { url: req.url, uidFromPath });
 
-                    // 1) Читаем тело формы аккуратно
+                    // читаем тело
+                    const raw = await readBody(req);
                     const ct = (req.headers['content-type'] || '').toLowerCase();
-                    let bodyText = '';
-                    await new Promise((resolve, reject) => {
-                        req.on('data', (c) => { bodyText += c; if (bodyText.length > 1e6) req.destroy(); });
-                        req.on('end', resolve);
-                        req.on('error', reject);
-                    });
-
                     let loginField = '';
                     if (ct.includes('application/json')) {
-                        const json = bodyText ? JSON.parse(bodyText) : {};
+                        const json = raw ? JSON.parse(raw) : {};
                         loginField = String(json.login || json.email || json.username || '').trim();
                     } else {
-                        const p = new URLSearchParams(bodyText);
-                        loginField = String(
-                            p.get('login') || p.get('email') || p.get('username') || ''
-                        ).trim();
+                        const p = new URLSearchParams(raw);
+                        loginField = String(p.get('login') || p.get('email') || p.get('username') || '').trim();
                     }
 
                     if (!loginField) {
-                        // отдадим понятную ошибку
+                        console.warn('[login] missing login field');
                         res.writeHead(400, { 'content-type': 'application/json' });
                         res.end(JSON.stringify({ error: 'invalid_request', message: 'login is required' }));
                         return;
                     }
 
-                    // TODO: здесь позже проверка пароля/БД
+                    // тут позже будет реальная проверка пароля/БД
                     const result = {
                         login: {
-                            accountId: loginField, // это будет sub
+                            accountId: loginField, // это станет sub
                             // remember: true,
                         },
                     };
 
+                    // ВАЖНО: здесь НЕ зовём interactionDetails, прямо завершаем интеракцию.
                     await provider.interactionFinished(req, res, result, { mergeWithLastSubmission: false });
-                    // 302 вернёт пользователю автоматом
+                    // 302 вернётся автоматом, дальше код не выполняется.
+                    console.log('[login] finished ok', { uidFromPath, accountId: loginField });
                 } catch (e) {
+                    console.error('[login] failed', e);
                     res.writeHead(400, { 'content-type': 'application/json' });
                     res.end(JSON.stringify({ error: 'login_failed', message: String(e?.message || e) }));
                 }
