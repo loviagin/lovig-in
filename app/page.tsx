@@ -8,10 +8,14 @@ const authorizeUrl =
   + `&state=abc`
   + `&nonce=def`;
 
+const logoutUrl = `${base}/api/oidc/session/end?post_logout_redirect_uri=${encodeURIComponent(base)}`;
+
 export default function Home() {
   return (
     <main>
       <a href={authorizeUrl}>Войти</a>
+      <br />
+      <a href={logoutUrl}>Выйти</a>
     </main>
   );
 }

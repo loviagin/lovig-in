@@ -6,9 +6,9 @@ import { generateKeyPair, exportJWK } from 'jose';
 import { parse } from 'node:url';
 
 const ISSUER = process.env.ISSUER_URL; // http://localhost:3300/api/oidc
-// const COOKIE_SECRET = process.env.COOKIE_SECRET; // dev-cookie-secret-change-me-very-long-1234567890
+const COOKIE_SECRET = process.env.COOKIE_SECRET; // dev-cookie-secret-change-me-very-long-1234567890
 if (!ISSUER) throw new Error('ISSUER_URL env is required');
-// if (!COOKIE_SECRET) throw new Error('COOKIE_SECRET env is required');
+if (!COOKIE_SECRET) throw new Error('COOKIE_SECRET env is required');
 
 async function main() {
     // 1) Разово генерим приватный ключ (в проде сделаем постоянным)
@@ -25,6 +25,13 @@ async function main() {
             url(ctx, interaction) {
                 return `/int/${interaction.uid}`;
             },
+        },
+        cookies: {
+            keys: [COOKIE_SECRET], // подпись cookie
+        },
+        ttl: {
+            Session: 60,      // 10 минут (подбери под себя)
+            Interaction: 60,   // 5 минут
         },
         clients: [
             {
