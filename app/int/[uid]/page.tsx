@@ -12,7 +12,7 @@ async function getDetails(uid: string) {
     return res.json() as Promise<{
         uid: string;
         prompt: { name: 'login' | 'consent' | string };
-        params: Record<string, any>;
+        params: Record<string, string>;   
     }>;
 }
 
