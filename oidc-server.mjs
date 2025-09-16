@@ -6,7 +6,9 @@ import { Pool } from 'pg';
 import argon2 from 'argon2';
 import { parse } from 'node:url';
 import fs from 'node:fs';
+
 import PgAdapter from './server/pg-adapter.mjs';
+import clients from './server/oidc-clients';
 
 const ISSUER = process.env.ISSUER_URL; // например: https://auth.lovig.in/api/oidc
 const COOKIE_SECRET = process.env.COOKIE_SECRET;
@@ -16,6 +18,8 @@ if (!ISSUER) throw new Error('ISSUER_URL env is required');
 if (!COOKIE_SECRET) throw new Error('COOKIE_SECRET env is required');
 if (!JWKS_LOCATION) throw new Error('JWKS_LOCATION env is required');
 if (!RESERVE_ROTATION_KEY) throw new Error('RESERVE_ROTATION_KEY env is required');
+
+const isLocal = /^https?:\/\/localhost(?::\d+)?/i.test(ISSUER);
 
 async function main() {
     const jwks = JSON.parse(fs.readFileSync(JWKS_LOCATION, 'utf8'));
@@ -41,8 +45,8 @@ async function main() {
         cookies: {
             names: { interaction: 'oidc:interaction', session: 'oidc:session' },
             keys: [COOKIE_SECRET, RESERVE_ROTATION_KEY], // на будущее
-            short: { secure: true, sameSite: 'lax', domain: 'auth.lovig.in', path: '/' },
-            long: { secure: true, sameSite: 'lax', domain: 'auth.lovig.in', path: '/' },
+            short: { secure: !isLocal, sameSite: 'lax', domain: 'auth.lovig.in', path: '/' },
+            long: { secure: !isLocal, sameSite: 'lax', domain: 'auth.lovig.in', path: '/' },
         },
         interactions: {
             url(ctx, i) {
@@ -58,29 +62,7 @@ async function main() {
             Grant: 60 * 60 * 24 * 7,      // 7 дней (consent grant)
             Interaction: 60 * 10,
         },
-        clients: [
-            {
-                client_id: 'demo-web',
-                client_name: 'Demo Web',
-                redirect_uris: [`${ISSUER}/cb`],
-                post_logout_redirect_uris: ['https://auth.lovig.in'],
-                response_types: ['code'],
-                grant_types: ['authorization_code', 'refresh_token'],
-                token_endpoint_auth_method: 'none',
-                id_token_signed_response_alg: 'ES256',
-            },
-            {
-                client_id: 'demo-ios',
-                client_name: 'Learnsy App',
-                application_type: 'native',
-                redirect_uris: ['com.lovigin.ios.Skillify://oidc'],
-                post_logout_redirect_uris: ['https://auth.lovig.in'],
-                token_endpoint_auth_method: 'none',
-                response_types: ['code'],
-                grant_types: ['authorization_code', 'refresh_token'],
-                id_token_signed_response_alg: 'ES256',
-            },
-        ],
+        clients,
         claims: {
             openid: ['sub'],
             email: ['email', 'email_verified'],
@@ -110,6 +92,20 @@ async function main() {
                 super(name, pool);
             }
         },
+        renderError(ctx, out, err) {
+            const code = err?.error || err?.name || 'server_error';
+            const msg  = err?.error_description || err?.message || '';
+            const state = ctx.oidc?.params?.state || '';
+            const clientId = ctx.oidc?.params?.client_id || '';
+        
+            const to = `/int/error?code=${encodeURIComponent(code)}`
+                     + `&message=${encodeURIComponent(msg)}`
+                     + `&state=${encodeURIComponent(state)}`
+                     + `&client_id=${encodeURIComponent(clientId)}`;
+        
+            ctx.status = 302;
+            ctx.redirect(to);
+          },
         jwks,
     };
 
@@ -128,17 +124,6 @@ async function main() {
     provider.on('server_error', (ctx, err) => {
         console.error('[server_error]', err?.stack || err);
     });
-
-    configuration.renderError = (ctx, out, err) => {
-        const code = err?.error || err?.name || 'server_error';
-        const msg = err?.error_description || err?.message || '';
-        const state = ctx.oidc?.params?.state || '';
-        const clientId = ctx.oidc?.params?.client_id || '';
-
-        const to = `/int/error?code=${encodeURIComponent(code)}&message=${encodeURIComponent(msg)}&state=${encodeURIComponent(state)}&client_id=${encodeURIComponent(clientId)}`;
-        ctx.status = 302;
-        ctx.redirect(to);
-    };
 
     provider.proxy = true;
 

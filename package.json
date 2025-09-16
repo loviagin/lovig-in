@@ -6,9 +6,12 @@
     "dev": "concurrently \"next dev -p 3300\" \"node oidc-server.mjs\"",
     "build": "next build",
     "start": "next start -p 3300",
-    "test:e2e": "playwright test",
     "deploy": "bash ./deploy.sh",
     "deploy:m": "bash ./deploy.sh",
+    "e2e:install": "npx playwright install --with-deps",
+    "e2e": "playwright test",
+    "e2e:headed": "playwright test --headed",
+    "e2e:ui": "playwright test --ui",
     "lint": "eslint"
   },
   "dependencies": {
