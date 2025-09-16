@@ -230,8 +230,9 @@ async function main() {
                     res.end(JSON.stringify(out));
                 } catch (e) {
                     console.error('[details] failed', e);
-                    res.writeHead(303, { Location: `/int/${uidFromPath}?err=login_failed` });
-                    res.end();
+                    res.writeHead(303, { Location: `/int/${uidFromPath}?screen=login&err=login_failed` }); 
+                    res.end(); 
+                    return;
                 }
             })();
             return;

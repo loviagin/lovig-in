@@ -85,17 +85,26 @@ export default function IntClient({ uid }: { uid: string }) {
     if (!details) return null;
 
     const appName = details.clientName || details.params.client_id;
+    const clientId = details.params.client_id;
+    const logoByClient: Record<string, { light: string; dark: string }> = {
+        'demo-ios': { light: '/logos/learnsy.webp', dark: '/logos/learnsy.webp' },
+    };
+    const logo = logoByClient[clientId] ?? { light: '/logo.webp', dark: '/logoWhite.webp' };
+
+    const Header = () => (
+        <header className={styles.header}>
+            <picture>
+                <source srcSet={logo.dark} media="(prefers-color-scheme: dark)" />
+                <img src={logo.light} alt={appName || 'App'} className={styles.logo} />
+            </picture>
+        </header>
+    );
 
     // CONSENT (если нужен) — приоритетно, не подменяем локальным view
     if (details.prompt.name === 'consent') {
         return (
             <main className={`${styles.shell} ${styles.wide}`}>
-                <header className={styles.header}>
-                    <picture>
-                        <source srcSet="/logoWhite.webp" media="(prefers-color-scheme: dark)" />
-                        <img src="/logo.webp" alt="LOVIGIN" className={styles.logo} />
-                    </picture>
-                </header>
+                <Header />
                 <h1 className={styles.title}>Authorize {appName ? `${appName}` : ''}</h1>
                 <p className={styles.lead}>
                     <span><b>{appName ? `${appName}` : ''}</b> requests access to:</span>
@@ -137,12 +146,7 @@ export default function IntClient({ uid }: { uid: string }) {
     if (view === 'chooser') {
         return (
             <main className={styles.shell}>
-                <header className={styles.header}>
-                    <picture>
-                        <source srcSet="/logoWhite.webp" media="(prefers-color-scheme: dark)" />
-                        <img src="/logo.webp" alt="LOVIGIN" className={styles.logo} />
-                    </picture>
-                </header>
+                <Header />
                 <h1 className={styles.title}>Continue {appName ? `to ${appName}` : ''}</h1>
                 <div className={styles.providersGrid}>
                     <button type="button" className={`${styles.btn} ${styles.providerBtn} ${styles.btnWithIcon}`} disabled={busy}>
@@ -179,12 +183,7 @@ export default function IntClient({ uid }: { uid: string }) {
         const alert = (text: string) => (<div className={styles.alert}>{text}</div>);
         return (
             <main className={styles.shell}>
-                <header className={styles.header}>
-                    <picture>
-                        <source srcSet="/logoWhite.webp" media="(prefers-color-scheme: dark)" />
-                        <img src="/logo.webp" alt="LOVIGIN" className={styles.logo} />
-                    </picture>
-                </header>
+                <Header />
                 <h1 className={styles.title}>Sign in {appName ? `to ${appName}` : ''}</h1>
                 <section key="login">
                     {err && loginErrorMessages[err] ? alert(loginErrorMessages[err]) : null}
@@ -232,12 +231,7 @@ export default function IntClient({ uid }: { uid: string }) {
     // SIGNUP (email)
     return (
         <main className={styles.shell}>
-            <header className={styles.header}>
-                <picture>
-                    <source srcSet="/logoWhite.webp" media="(prefers-color-scheme: dark)" />
-                    <img src="/logo.webp" alt="LOVIGIN" className={styles.logo} />
-                </picture>
-            </header>
+            <Header />
             <h1 className={styles.title}>Create account {appName ? `for ${appName}` : ''}</h1>
             <section key="signup">
                 {(() => { const err = sp.get('err'); const m: Record<string, string> = { invalid_email: 'Incorrect e-mail.', missing_fields: 'Fill in all the fields.', invalid_credentials: 'Incorrect email or password.', weak_password: 'The password is too short.', email_exists: 'The mail has already been registered.', login_failed: 'Couldn\'t log in. Try again.', signup_failed: 'Couldn\'t create an account. Try again.' }; return err && m[err] ? (<div className={styles.alert}>{m[err]}</div>) : null; })()}
