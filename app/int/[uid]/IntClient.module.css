@@ -3,7 +3,11 @@
     margin: 40px auto;
     padding: 16px;
     font-family: system-ui;
-    color: #0f172a
+    color: #0f172a;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06)
 }
 
 .shell.wide {
@@ -34,7 +38,8 @@
 .providersGrid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px
+    gap: 12px;
+    margin-bottom: 8px
 }
 
 @media (max-width:480px) {
@@ -49,8 +54,11 @@
     justify-content: center;
     width: 100%;
     padding: 12px 14px;
+    min-height: 44px;
     border-radius: 12px;
     font-weight: 600;
+    font-size: 14px;
+    line-height: 1;
     border: 1px solid transparent;
     background: #0ea5e9;
     color: #fff;
@@ -74,7 +82,8 @@
 }
 
 .btnPrimary:hover {
-    background: #1d4ed8
+    background: #1d4ed8;
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.25)
 }
 
 .btnSecondary {
@@ -84,7 +93,8 @@
 }
 
 .btnSecondary:hover {
-    background: #e2e8f0
+    background: #e2e8f0;
+    box-shadow: 0 6px 16px rgba(2, 6, 23, 0.06)
 }
 
 .providerBtn {
@@ -94,7 +104,8 @@
 }
 
 .providerBtn:hover {
-    background: #f8fafc
+    background: #f8fafc;
+    box-shadow: 0 6px 16px rgba(2, 6, 23, 0.06)
 }
 
 .btnWithIcon {
@@ -111,14 +122,20 @@
 .icon {
     width: 20px;
     height: 20px;
-    display: inline-block
+    display: block;
+    flex-shrink: 0
+}
+
+.btnLabel {
+    line-height: 1;
+    white-space: nowrap
 }
 
 .divider {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin: 12px 0;
+    margin: 16px 0;
     color: #64748b
 }
 
@@ -157,6 +174,11 @@
     outline: none;
     border-color: #94a3b8;
     box-shadow: 0 0 0 4px rgba(148, 163, 184, .2)
+}
+
+.btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, .35)
 }
 
 .helper {
