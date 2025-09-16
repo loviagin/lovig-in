@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import styles from './IntClient.module.css';
 
 type IntDetails = {
     uid: string;
@@ -48,28 +49,22 @@ export default function IntClient({ uid }: { uid: string }) {
         return () => { abort = true; };
     }, [uid]);
 
-    const shell: React.CSSProperties = { maxWidth: 420, margin: '40px auto', fontFamily: 'system-ui', padding: 16 };
-    const input: React.CSSProperties = { padding: 10, border: '1px solid #ccc', borderRadius: 8 };
-    const btn: React.CSSProperties = { padding: 12, borderRadius: 10, fontWeight: 600, width: '100%' };
-    const btnPri: React.CSSProperties = { ...btn, background: '#2563eb', color: '#fff' };
-    const btnSec: React.CSSProperties = { ...btn, background: '#eee', color: '#111' };
-    const gapCol: React.CSSProperties = { display: 'grid', gap: 12 };
+    // styles moved to CSS module
 
-    if (loading) return <main style={shell}>Loading…</main>;
-    if (error) return <main style={{ ...shell, color: 'crimson' }}>{error}</main>;
+    if (loading) return <main className={styles.shell}>Loading…</main>;
+    if (error) return <main className={`${styles.shell} ${styles.error}`}>{error}</main>;
     if (!details) return null;
 
     // CONSENT (если нужен) — приоритетно, не подменяем локальным view
     if (details.prompt.name === 'consent') {
         return (
-            <main style={{ ...shell, maxWidth: 520 }}>
-                <h1>Authorize</h1>
+            <main className={`${styles.shell} ${styles.wide}`}>
+                <h1 className={styles.title}>Authorize</h1>
                 <p>
-                    App <b>{details.params.client_id}</b> requests:&nbsp;
-                    <code>{details.params.scope ?? 'openid'}</code>
+                    App <b>{details.params.client_id}</b> requests: <code>{details.params.scope ?? 'openid'}</code>
                 </p>
                 <form method="post" action={`/interaction/${uid}/confirm`}>
-                    <button type="submit" style={btnPri}>Continue</button>
+                    <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>Continue</button>
                 </form>
             </main>
         );
@@ -78,19 +73,19 @@ export default function IntClient({ uid }: { uid: string }) {
     // CHOOSER — список соцсетей (пока заглушки) + email-кнопки
     if (view === 'chooser') {
         return (
-            <main style={shell}>
-                <h1>Continue</h1>
-                <div style={gapCol}>
+            <main className={styles.shell}>
+                <h1 className={styles.title}>Continue</h1>
+                <div className={styles.providersGrid}>
                     {/* Соцсети — пока как заглушки; позже подставишь ссылки */}
-                    <button type="button" style={btnSec} disabled>Continue with Google (soon)</button>
-                    <button type="button" style={btnSec} disabled>Continue with Apple (soon)</button>
-
-                    <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: '8px 0' }} />
-
-                    <button type="button" style={btnPri} onClick={() => setView('signup')}>
+                    <button type="button" className={`${styles.btn} ${styles.providerBtn}`} disabled>Continue with Google (soon)</button>
+                    <button type="button" className={`${styles.btn} ${styles.providerBtn}`} disabled>Continue with Apple (soon)</button>
+                </div>
+                <div className={styles.divider}><span>or</span></div>
+                <div className={styles.actions}>
+                    <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setView('signup')}>
                         Create account with Email
                     </button>
-                    <button type="button" style={btnSec} onClick={() => setView('login')}>
+                    <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => setView('login')}>
                         Sign in with Email
                     </button>
                 </div>
@@ -101,36 +96,36 @@ export default function IntClient({ uid }: { uid: string }) {
     // LOGIN (email)
     if (view === 'login') {
         return (
-            <main style={shell}>
-                <h1>Sign in</h1>
-                <form method="post" action={`/interaction/${uid}/login`} style={gapCol}>
-                    <input name="email" type="email" placeholder="email" required style={input}
+            <main className={styles.shell}>
+                <h1 className={styles.title}>Sign in</h1>
+                <form method="post" action={`/interaction/${uid}/login`} className={styles.form}>
+                    <input name="email" type="email" placeholder="email" required className={styles.input}
                         autoComplete="email" inputMode="email" autoCapitalize="none" autoCorrect="off" />
-                    <input name="password" type="password" placeholder="password" required style={input}
+                    <input name="password" type="password" placeholder="password" required className={styles.input}
                         autoComplete="current-password" />
-                    <button type="submit" style={btnPri}>Sign in</button>
+                    <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>Sign in</button>
                 </form>
-                <div style={{ height: 8 }} />
-                <button type="button" style={btnSec} onClick={() => setView('signup')}>Create account instead</button>
+                <div className={styles.helper} />
+                <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => setView('signup')}>Create account instead</button>
             </main>
         );
     }
 
     // SIGNUP (email)
     return (
-        <main style={shell}>
-            <h1>Create account</h1>
-            <form method="post" action={`/interaction/${uid}/signup`} style={gapCol}>
-                <input name="name" placeholder="name" style={input}
+        <main className={styles.shell}>
+            <h1 className={styles.title}>Create account</h1>
+            <form method="post" action={`/interaction/${uid}/signup`} className={styles.form}>
+                <input name="name" placeholder="name" className={styles.input}
                     autoComplete="name" autoCapitalize="words" autoCorrect="off" />
-                <input name="email" type="email" placeholder="email" required style={input}
+                <input name="email" type="email" placeholder="email" required className={styles.input}
                     autoComplete="email" inputMode="email" autoCapitalize="none" autoCorrect="off" />
-                <input name="password" type="password" placeholder="password (min 6)" required style={input}
+                <input name="password" type="password" placeholder="password (min 6)" required className={styles.input}
                     autoComplete="new-password" />
-                <button type="submit" style={btnPri}>Create account</button>
+                <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>Create account</button>
             </form>
-            <div style={{ height: 8 }} />
-            <button type="button" style={btnSec} onClick={() => setView('login')}>I already have an account</button>
+            <div className={styles.helper} />
+            <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => setView('login')}>I already have an account</button>
         </main>
     );
 }

@@ -6,6 +6,6 @@ export default async function Page({
 }: {
   params: Promise<{ uid: string }>;
 }) {
-  const { uid } = await params; // здесь можно await
+  const { uid } = await params;
   return <IntClient uid={uid} />;
 }
