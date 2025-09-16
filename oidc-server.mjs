@@ -1,120 +1,41 @@
-// oidc-server.mjs
-import 'dotenv/config';
 import http from 'node:http';
+import { parse } from 'node:url';
 import Provider from 'oidc-provider';
 import { Pool } from 'pg';
-import argon2 from 'argon2';
-import { parse } from 'node:url';
-import fs from 'node:fs';
 
-import PgAdapter from './server/pg-adapter.mjs';
-import clients from './server/oidc-clients.js';
-
-const ISSUER = process.env.ISSUER_URL; // например: https://auth.lovig.in/api/oidc
-const COOKIE_SECRET = process.env.COOKIE_SECRET;
-const RESERVE_ROTATION_KEY = process.env.RESERVE_ROTATION_KEY;
-const JWKS_LOCATION = process.env.JWKS_LOCATION;
-if (!ISSUER) throw new Error('ISSUER_URL env is required');
-if (!COOKIE_SECRET) throw new Error('COOKIE_SECRET env is required');
-if (!JWKS_LOCATION) throw new Error('JWKS_LOCATION env is required');
-if (!RESERVE_ROTATION_KEY) throw new Error('RESERVE_ROTATION_KEY env is required');
+import { ISSUER, DATABASE_URL } from './server/env.mjs';
+import buildConfiguration from './server/config.mjs';
+import { log } from './server/logger.mjs';
+import {
+    getInteractionLanding,
+    getInteractionDetails,
+    postLogin,
+    postSignup,
+    postConfirm,
+} from './server/routes/interactions.mjs';
 
 async function main() {
-    const jwks = JSON.parse(fs.readFileSync(JWKS_LOCATION, 'utf8'));
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-
-    const configuration = {
-        pkce: { required: () => true, methods: ['S256'] },
-        rotateRefreshToken: true,
-        features: {
-            devInteractions: { enabled: false },
-            rpInitiatedLogout: { enabled: true },
-            revocation: { enabled: true },
-        },
-        logoutSource(ctx, form) {
-            ctx.type = 'html';
-            ctx.body = `<!doctype html><meta charset="utf-8"><body>${form}
-          <script>document.forms[0]?.submit()</script>`;
-        },
-        postLogoutSuccessSource(ctx) {
-            ctx.type = 'html';
-            ctx.body = '<!doctype html><meta charset="utf-8"><body>Signed out</body>';
-        },
-        cookies: {
-            names: { interaction: 'oidc:interaction', session: 'oidc:session' },
-            keys: [COOKIE_SECRET, RESERVE_ROTATION_KEY], // на будущее
-            short: { secure: true, sameSite: 'lax', domain: 'auth.lovig.in', path: '/' },
-            long: { secure: true, sameSite: 'lax', domain: 'auth.lovig.in', path: '/' },
-        },
-        interactions: {
-            url(ctx, i) {
-                const wantsSignup = ctx.oidc?.params?.screen === 'signup';
-                return `/interaction/${i.uid}${wantsSignup ? '?screen=signup' : ''}`;
-            },
-        },
-        ttl: {
-            AccessToken: 60 * 60,         // 1 час
-            IdToken: 60 * 10,             // 10 минут
-            Session: 60 * 60 * 24 * 7,    // 7 дней (cookie сессия)
-            RefreshToken: 60 * 60 * 24 * 30, // 30 дней
-            Grant: 60 * 60 * 24 * 7,      // 7 дней (consent grant)
-            Interaction: 60 * 10,
-        },
-        clients,
-        claims: {
-            openid: ['sub'],
-            email: ['email', 'email_verified'],
-            profile: ['name'],
-        },
-        findAccount: async (ctx, sub) => {
-            return {
-                accountId: sub,
-                claims: async (use, scope) => {
-                    // sub = users.id
-                    const { rows } = await pool.query(
-                        'SELECT email, email_verified, name FROM users WHERE id = $1',
-                        [sub]
-                    );
-                    if (!rows[0]) return { sub };
-                    const u = rows[0];
-                    return {
-                        sub,
-                        ...(scope?.includes('email') ? { email: u.email, email_verified: u.email_verified } : {}),
-                        ...(scope?.includes('profile') ? { name: u.name ?? null } : {}),
-                    };
-                }
-            };
-        },
-        adapter: class extends PgAdapter {
-            constructor(name) {
-                super(name, pool);
-            }
-        },
-        jwks,
-    };
+    const pool = new Pool({ connectionString: DATABASE_URL });
+    const configuration = buildConfiguration({ pool });
 
     const provider = new Provider(ISSUER, configuration);
 
-    // события (оставил как есть)
+    // события
     provider.on('authorization.error', (ctx, err) => {
-        console.error('[authorization.error]', err?.message, {
+        log.error('[authorization.error]', err?.message, {
             client_id: ctx.oidc?.params?.client_id,
             redirect_uri: ctx.oidc?.params?.redirect_uri,
             scope: ctx.oidc?.params?.scope,
             response_type: ctx.oidc?.params?.response_type,
         });
     });
+    provider.on('server_error', (_ctx, err) => log.error('[server_error]', err?.stack || err));
 
-    provider.on('server_error', (ctx, err) => {
-        console.error('[server_error]', err?.stack || err);
-    });
-
-    configuration.renderError = (ctx, out, err) => {
+    configuration.renderError = (ctx, _out, err) => {
         const code = err?.error || err?.name || 'server_error';
         const msg = err?.error_description || err?.message || '';
         const state = ctx.oidc?.params?.state || '';
         const clientId = ctx.oidc?.params?.client_id || '';
-
         const to = `/int/error?code=${encodeURIComponent(code)}&message=${encodeURIComponent(msg)}&state=${encodeURIComponent(state)}&client_id=${encodeURIComponent(clientId)}`;
         ctx.status = 302;
         ctx.redirect(to);
@@ -125,258 +46,58 @@ async function main() {
     const server = http.createServer(async (req, res) => {
         const { pathname, query } = parse(req.url, true);
 
+        // healthz
         if (pathname === '/healthz') {
             res.writeHead(200, { 'content-type': 'text/plain' });
             res.end('ok');
             return;
         }
 
+        // demo callback
         if (pathname === '/cb') {
             res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
             res.end(`Callback OK
-                        code=${query.code}
-                        state=${query.state}
-            `);
+code=${query.code}
+state=${query.state}
+`);
             return;
         }
 
-        function readBody(req) {
-            return new Promise((resolve, reject) => {
-                let data = '';
-                req.on('data', (c) => { data += c; if (data.length > 1e6) req.destroy(); });
-                req.on('end', () => resolve(data));
-                req.on('error', reject);
-            });
+        // interactions
+        let m;
+        if (req.method === 'GET' && (m = pathname.match(/^\/interaction\/([^/]+)$/))) {
+            return await getInteractionLanding(provider, req, res, m[1]);
+        }
+        if (req.method === 'GET' && (m = pathname.match(/^\/interaction\/([^/]+)\/details$/))) {
+            return await getInteractionDetails(provider, req, res);
+        }
+        if (req.method === 'POST' && (m = pathname.match(/^\/interaction\/([^/]+)\/login$/))) {
+            return await postLogin(provider, pool, req, res, m[1]);
+        }
+        if (req.method === 'POST' && (m = pathname.match(/^\/interaction\/([^/]+)\/signup$/))) {
+            return await postSignup(provider, pool, req, res, m[1]);
+        }
+        if (req.method === 'POST' && (m = pathname.match(/^\/interaction\/([^/]+)\/confirm$/))) {
+            return await postConfirm(provider, req, res);
         }
 
-        // GET /interaction/:uid  -> редирект на Next
-        const m1 = pathname.match(/^\/interaction\/([^/]+)$/);
-        if (req.method === 'GET' && m1) {
-            (async () => {
-                try {
-                    const details = await provider.interactionDetails(req, res);
-                    const wantsSignup =
-                        typeof details.params?.screen === 'string' &&
-                        details.params.screen === 'signup';
-                    const extra = wantsSignup ? '?screen=signup' : '';
-                    res.writeHead(302, { Location: `/int/${details.uid}${extra}` });
-                    res.end();
-                } catch {
-                    res.writeHead(302, { Location: `/int/${m1[1]}` });
-                    res.end();
-                }
-            })();
-            return;
-        }
-
-        // GET /interaction/:uid/details -> JSON
-        const m1d = pathname.match(/^\/interaction\/([^/]+)\/details$/);
-        if (req.method === 'GET' && m1d) {
-            (async () => {
-                try {
-                    const details = await provider.interactionDetails(req, res);
-                    const params = details.params || {};
-                    const session = details.session || null;
-
-                    // <-- ПАТЧ: если клиент запросил prompt=signup, а сессии нет,
-                    //           отдаём фронту signup вместо login (без interactionFinished)
-                    let prompt = details.prompt;
-                    const wantsSignup =
-                        (typeof params.screen === 'string' && params.screen === 'signup') ||
-                        false;
-                    const hasLoginSession = Boolean(session && session.accountId);
-
-                    if (prompt?.name === 'login' && wantsSignup && !hasLoginSession) {
-                        prompt = { ...prompt, name: 'signup' };
-                    }
-
-                    let clientName = params.client_id;
-                    try {
-                        const client = await provider.Client.find(params.client_id);
-                        const metaName =
-                            (client && typeof client.clientName === 'string' && client.clientName) ||
-                            (client && client.metadata && typeof client.metadata.client_name === 'string' && client.metadata.client_name);
-                        if (metaName && metaName.trim()) clientName = metaName.trim();
-                    } catch { /* ignore */ }
-
-                    const out = {
-                        uid: details.uid,
-                        prompt,
-                        params,
-                        session,
-                        clientName,
-                    };
-                    res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
-                    res.end(JSON.stringify(out));
-                } catch (e) {
-                    console.error('[details] failed', e);
-                    res.writeHead(303, { Location: `/int/${uidFromPath}?screen=login&err=login_failed` }); 
-                    res.end(); 
-                    return;
-                }
-            })();
-            return;
-        }
-
-        // ==== POST /interaction/:uid/login — логин
-        const m2 = pathname.match(/^\/interaction\/([^/]+)\/login$/);
-        if (req.method === 'POST' && m2) {
-            (async () => {
-                const uidFromPath = m2[1];
-                try {
-                    console.log('[login] POST', { url: req.url, uidFromPath });
-
-                    const raw = await readBody(req);
-                    const ct = (req.headers['content-type'] || '').toLowerCase();
-                    const form = ct.includes('application/json')
-                        ? (raw ? JSON.parse(raw) : {})
-                        : Object.fromEntries(new URLSearchParams(raw));
-
-                    const email = String(form.login || form.email || '').trim().toLowerCase();
-                    const password = String(form.password || '').trim();
-
-                    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                        res.writeHead(303, { Location: `/int/${uidFromPath}?screen=login&err=invalid_email` });
-                        res.end();
-                        return;
-                    }
-                    if (!email || !password) {
-                        res.writeHead(303, { Location: `/int/${uidFromPath}?screen=login&err=missing_fields` }); res.end(); return;
-                    }
-
-                    const { rows } = await pool.query(
-                        'SELECT id, password_hash, email_verified, name FROM users WHERE email = $1',
-                        [email]
-                    );
-                    if (!rows[0]) {
-                        res.writeHead(303, { Location: `/int/${uidFromPath}?screen=login&err=invalid_credentials` });
-                        res.end();
-                        return;
-                    }
-
-                    if (!(await argon2.verify(rows[0].password_hash, password))) {
-                        await new Promise(r => setTimeout(r, 500));
-                        res.writeHead(303, { Location: `/int/${uidFromPath}?screen=login&err=invalid_credentials` }); res.end(); return;
-                    }
-
-                    const result = { login: { accountId: rows[0].id } };
-                    await provider.interactionFinished(req, res, result, { mergeWithLastSubmission: false });
-                    console.log('[login] finished ok', { uidFromPath, accountId: rows[0].id });
-                } catch (e) {
-                    console.error('[login] failed', e);
-                    res.writeHead(303, { Location: `/int/${uidFromPath}?screen=login&err=login_failed` }); 
-                    res.end(); 
-                    return;
-                }
-            })();
-            return;
-        }
-
-        // ==== NEW: POST /interaction/:uid/signup — регистрация
-        const m2b = pathname.match(/^\/interaction\/([^/]+)\/signup$/);
-        if (req.method === 'POST' && m2b) {
-            (async () => {
-                try {
-                    // Важно: интеракция должна существовать (иначе 400)
-                    await provider.interactionDetails(req, res);
-
-                    const raw = await readBody(req);
-                    const ct = (req.headers['content-type'] || '').toLowerCase();
-                    const form = ct.includes('application/json')
-                        ? (raw ? JSON.parse(raw) : {})
-                        : Object.fromEntries(new URLSearchParams(raw));
-
-                    const name = (form.name ?? '').toString().trim();
-                    const email = (form.email ?? '').toString().trim().toLowerCase();
-                    const password = (form.password ?? '').toString();
-
-                    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                        res.writeHead(303, { Location: `/int/${details.uid}?screen=signup&err=invalid_email` }); res.end(); return;
-                    }
-                    if (!password || password.length < 6) {
-                        res.writeHead(303, { Location: `/int/${details.uid}?screen=signup&err=weak_password` });
-                        res.end();
-                        return;
-                    }
-
-                    // Проверяем, что пользователя ещё нет
-                    const exists = await pool.query('SELECT 1 FROM users WHERE email = $1', [email]);
-                    if (exists.rowCount > 0) {
-                        res.writeHead(409, { 'content-type': 'application/json' });
-                        res.end(JSON.stringify({ error: 'conflict', message: 'email already registered' }));
-                        return;
-                    }
-
-                    const password_hash = await argon2.hash(password);
-                    // Создаём пользователя и получаем id
-                    const ins = await pool.query(
-                        'INSERT INTO users (email, password_hash, name, email_verified) VALUES ($1,$2,$3,$4) RETURNING id',
-                        [email, password_hash, name || null, false]
-                    );
-                    const userId = ins.rows[0].id;
-
-                    // Завершаем интеракцию как успешный логин (sub = новый userId)
-                    const result = { login: { accountId: userId } };
-                    await provider.interactionFinished(req, res, result, { mergeWithLastSubmission: false });
-                } catch (e) {
-                    console.error('[signup] failed', e);
-                    res.writeHead(303, { Location: `/int/${m2b[1]}?screen=signup&err=signup_failed` }); 
-                    res.end(); 
-                    return;
-                }
-            })();
-            return;
-        }
-
-        // ==== POST /interaction/:uid/confirm — consent
-        const m3 = pathname.match(/^\/interaction\/([^/]+)\/confirm$/);
-        if (req.method === 'POST' && m3) {
-            (async () => {
-                try {
-                    const details = await provider.interactionDetails(req, res);
-                    const { params, session } = details;
-
-                    let grant;
-                    if (details.grantId) {
-                        grant = await provider.Grant.find(details.grantId);
-                    } else {
-                        grant = new provider.Grant({
-                            accountId: session.accountId,
-                            clientId: params.client_id,
-                        });
-                    }
-                    if (typeof params.scope === 'string' && params.scope) {
-                        grant.addOIDCScope(params.scope);
-                    }
-                    const grantId = await grant.save();
-                    await provider.interactionFinished(
-                        req, res, { consent: { grantId } }, { mergeWithLastSubmission: true }
-                    );
-                } catch (e) {
-                    res.writeHead(302, { Location: `/int/error?code=consent_failed&message=${encodeURIComponent(String(e?.message || e))}` });
-                    res.end(); 
-                    return;
-                }
-            })();
-            return;
-        }
-
+        // всё остальное — в provider
         return provider.callback()(req, res);
     });
 
     server.listen(4400, () => {
-        console.log('OIDC listening on http://localhost:4400  (issuer =', ISSUER, ')');
+        log.info('OIDC listening on http://localhost:4400', `(issuer = ${ISSUER})`);
     });
 
     process.on('SIGTERM', async () => {
-        console.log('SIGTERM: shutting down OIDC...');
-        server.close(() => console.log('HTTP server closed'));
+        log.info('SIGTERM: shutting down OIDC...');
+        server.close(() => log.info('HTTP server closed'));
         try { await pool.end(); } catch { }
         process.exit(0);
     });
     process.on('SIGINT', async () => {
-        console.log('SIGINT: shutting down OIDC...');
-        server.close(() => console.log('HTTP server closed'));
+        log.info('SIGINT: shutting down OIDC...');
+        server.close(() => log.info('HTTP server closed'));
         try { await pool.end(); } catch { }
         process.exit(0);
     });
