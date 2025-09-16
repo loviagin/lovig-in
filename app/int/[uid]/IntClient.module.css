@@ -39,6 +39,21 @@
     font-size: 14px
 }
 
+.lead {
+    margin: 8px 0 18px;
+    color: #64748b;
+    text-align: center;
+}
+
+.lead code {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 2px 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 12px;
+}
+
 .providersGrid {
     display: grid;
     grid-template-columns: 1fr 1fr;

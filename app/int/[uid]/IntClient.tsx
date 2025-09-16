@@ -70,8 +70,9 @@ export default function IntClient({ uid }: { uid: string }) {
                     </picture>
                 </header>
                 <h1 className={styles.title}>Authorize {appName ? `${appName}` : ''}</h1>
-                <p>
-                    App <b>{details.params.client_id}</b> requests: <code>{details.params.scope ?? 'openid'}</code>
+                <p className={styles.lead}>
+                    <span>App <b>{appName ? `${appName}` : ''}</b> requests access to:</span>
+                    &nbsp;<code>{details.params.scope ?? 'openid'}</code>
                 </p>
                 <form method="post" action={`/interaction/${uid}/confirm`}>
                     <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>Continue</button>
