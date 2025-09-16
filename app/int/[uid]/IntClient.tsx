@@ -59,6 +59,13 @@ export default function IntClient({ uid }: { uid: string }) {
     if (details.prompt.name === 'consent') {
         return (
             <main className={`${styles.shell} ${styles.wide}`}>
+                <header className={styles.header}>
+                    <picture>
+                        <source srcSet="/logoWhite.webp" media="(prefers-color-scheme: dark)" />
+                        <img src="/logo.webp" alt="LOVIGIN" className={styles.logo} />
+                    </picture>
+                    <span className={styles.brand}>LOVIGIN</span>
+                </header>
                 <h1 className={styles.title}>Authorize</h1>
                 <p>
                     App <b>{details.params.client_id}</b> requests: <code>{details.params.scope ?? 'openid'}</code>
@@ -74,6 +81,13 @@ export default function IntClient({ uid }: { uid: string }) {
     if (view === 'chooser') {
         return (
             <main className={styles.shell}>
+                <header className={styles.header}>
+                    <picture>
+                        <source srcSet="/logoWhite.webp" media="(prefers-color-scheme: dark)" />
+                        <img src="/logo.webp" alt="LOVIGIN" className={styles.logo} />
+                    </picture>
+                    <span className={styles.brand}>LOVIGIN</span>
+                </header>
                 <h1 className={styles.title}>Continue</h1>
                 <div className={styles.providersGrid}>
                     <button type="button" className={`${styles.btn} ${styles.providerBtn} ${styles.btnWithIcon}`} disabled>
@@ -110,6 +124,13 @@ export default function IntClient({ uid }: { uid: string }) {
     if (view === 'login') {
         return (
             <main className={styles.shell}>
+                <header className={styles.header}>
+                    <picture>
+                        <source srcSet="/logoWhite.webp" media="(prefers-color-scheme: dark)" />
+                        <img src="/logo.webp" alt="LOVIGIN" className={styles.logo} />
+                    </picture>
+                    <span className={styles.brand}>LOVIGIN</span>
+                </header>
                 <h1 className={styles.title}>Sign in</h1>
                 <form method="post" action={`/interaction/${uid}/login`} className={styles.form}>
                     <input name="email" type="email" placeholder="email" required className={styles.input}
@@ -127,6 +148,13 @@ export default function IntClient({ uid }: { uid: string }) {
     // SIGNUP (email)
     return (
         <main className={styles.shell}>
+            <header className={styles.header}>
+                <picture>
+                    <source srcSet="/logoWhite.webp" media="(prefers-color-scheme: dark)" />
+                    <img src="/logo.webp" alt="LOVIGIN" className={styles.logo} />
+                </picture>
+                <span className={styles.brand}>LOVIGIN</span>
+            </header>
             <h1 className={styles.title}>Create account</h1>
             <form method="post" action={`/interaction/${uid}/signup`} className={styles.form}>
                 <input name="name" placeholder="name" className={styles.input}
