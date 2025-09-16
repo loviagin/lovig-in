@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { FaApple, FaGoogle } from 'react-icons/fa6';
 import styles from './IntClient.module.css';
 
 type IntDetails = {
@@ -90,16 +91,13 @@ export default function IntClient({ uid }: { uid: string }) {
                 <div className={styles.providersGrid}>
                     <button type="button" className={`${styles.btn} ${styles.providerBtn} ${styles.btnWithIcon}`} disabled>
                         <span className={styles.btnInner}>
-                            <img className={styles.iconImg} src="https://cdn.simpleicons.org/google/ea4335" alt="Google" />
+                            <FaGoogle className={styles.icon} aria-hidden="true" />
                             <span className={styles.btnLabel}>Continue with Google</span>
                         </span>
                     </button>
                     <button type="button" className={`${styles.btn} ${styles.providerBtn} ${styles.btnWithIcon}`} disabled>
                         <span className={styles.btnInner}>
-                            <picture>
-                                <source srcSet="https://cdn.simpleicons.org/apple/ffffff" media="(prefers-color-scheme: dark)" />
-                                <img className={styles.iconImg} src="https://cdn.simpleicons.org/apple/000000" alt="Apple" />
-                            </picture>
+                            <FaApple className={styles.icon} aria-hidden="true" />
                             <span className={styles.btnLabel}>Continue with Apple</span>
                         </span>
                     </button>
