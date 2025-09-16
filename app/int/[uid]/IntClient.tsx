@@ -69,7 +69,7 @@ export default function IntClient({ uid }: { uid: string }) {
                         <img src="/logo.webp" alt="LOVIGIN" className={styles.logo} />
                     </picture>
                 </header>
-                <h1 className={styles.title}>Authorize {appName ? `“${appName}”` : ''}</h1>
+                <h1 className={styles.title}>Authorize {appName ? `${appName}` : ''}</h1>
                 <p>
                     App <b>{details.params.client_id}</b> requests: <code>{details.params.scope ?? 'openid'}</code>
                 </p>
@@ -90,7 +90,7 @@ export default function IntClient({ uid }: { uid: string }) {
                         <img src="/logo.webp" alt="LOVIGIN" className={styles.logo} />
                     </picture>
                 </header>
-                <h1 className={styles.title}>Continue {appName ? `to “${appName}”` : ''}</h1>
+                <h1 className={styles.title}>Continue {appName ? `to ${appName}` : ''}</h1>
                 <div className={styles.providersGrid}>
                     <button type="button" className={`${styles.btn} ${styles.providerBtn} ${styles.btnWithIcon}`} disabled>
                         <span className={styles.btnInner}>
@@ -128,7 +128,7 @@ export default function IntClient({ uid }: { uid: string }) {
                         <img src="/logo.webp" alt="LOVIGIN" className={styles.logo} />
                     </picture>
                 </header>
-                <h1 className={styles.title}>Sign in {appName ? `to “${appName}”` : ''}</h1>
+                <h1 className={styles.title}>Sign in {appName ? `to ${appName}` : ''}</h1>
                 <form method="post" action={`/interaction/${uid}/login`} className={styles.form}>
                     <input name="email" type="email" placeholder="email" required className={styles.input}
                         autoComplete="email" inputMode="email" autoCapitalize="none" autoCorrect="off" />
@@ -151,7 +151,7 @@ export default function IntClient({ uid }: { uid: string }) {
                     <img src="/logo.webp" alt="LOVIGIN" className={styles.logo} />
                 </picture>
             </header>
-            <h1 className={styles.title}>Create account {appName ? `for “${appName}”` : ''}</h1>
+            <h1 className={styles.title}>Create account {appName ? `for ${appName}` : ''}</h1>
             <form method="post" action={`/interaction/${uid}/signup`} className={styles.form}>
                 <input name="name" placeholder="name" className={styles.input}
                     autoComplete="name" autoCapitalize="words" autoCorrect="off" />
