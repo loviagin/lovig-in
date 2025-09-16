@@ -71,9 +71,35 @@ export default function IntClient({ uid }: { uid: string }) {
                 </header>
                 <h1 className={styles.title}>Authorize {appName ? `${appName}` : ''}</h1>
                 <p className={styles.lead}>
-                    <span>App <b>{appName ? `${appName}` : ''}</b> requests access to:</span>
+                    <span><b>{appName ? `${appName}` : ''}</b> requests access to:</span>
                     &nbsp;<code>{details.params.scope ?? 'openid'}</code>
                 </p>
+                {(() => {
+                    const scopes = (details.params.scope || 'openid').split(/\s+/).filter(Boolean);
+                    const explanations: Record<string, { title: string; desc: string }> = {
+                        openid: { title: 'Basic identity', desc: 'Basic Profile Information' },
+                        profile: { title: 'Public profile', desc: 'Name, avatar, and public information of your profile (without private data).' },
+                        email: { title: 'Email address', desc: 'Access to your email and its verification status.' },
+                        phone: { title: 'Phone number', desc: 'Access to your phone number and its verification status.' },
+                        address: { title: 'Address', desc: 'Access to your address (country/city/street), if you filled it.' },
+                        offline_access: { title: 'Offline access', desc: 'Right to receive an updated access without your involvement (refresh token).' },
+                    };
+                    return (
+                        <section className={styles.scopeList} aria-label="Requested permissions">
+                            <ul className={styles.scopeUl}>
+                                {scopes.map((s) => {
+                                    const info = explanations[s] || { title: s, desc: 'Requested access scope.' };
+                                    return (
+                                        <li key={s} className={styles.scopeLi}>
+                                            <div className={styles.scopeTitle}>{info.title}</div>
+                                            <div className={styles.scopeDesc}>{info.desc}</div>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </section>
+                    );
+                })()}
                 <form method="post" action={`/interaction/${uid}/confirm`}>
                     <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>Continue</button>
                 </form>
@@ -131,9 +157,9 @@ export default function IntClient({ uid }: { uid: string }) {
                 </header>
                 <h1 className={styles.title}>Sign in {appName ? `to ${appName}` : ''}</h1>
                 <form method="post" action={`/interaction/${uid}/login`} className={styles.form}>
-                    <input name="email" type="email" placeholder="email" required className={styles.input}
+                    <input name="email" type="email" placeholder="Your email" required className={styles.input}
                         autoComplete="email" inputMode="email" autoCapitalize="none" autoCorrect="off" />
-                    <input name="password" type="password" placeholder="password" required className={styles.input}
+                    <input name="password" type="password" placeholder="Password" required className={styles.input}
                         autoComplete="current-password" />
                     <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>Sign in</button>
                 </form>
@@ -154,11 +180,11 @@ export default function IntClient({ uid }: { uid: string }) {
             </header>
             <h1 className={styles.title}>Create account {appName ? `for ${appName}` : ''}</h1>
             <form method="post" action={`/interaction/${uid}/signup`} className={styles.form}>
-                <input name="name" placeholder="name" className={styles.input}
+                <input name="name" placeholder="Your name" className={styles.input}
                     autoComplete="name" autoCapitalize="words" autoCorrect="off" />
-                <input name="email" type="email" placeholder="email" required className={styles.input}
+                <input name="email" type="email" placeholder="Enter email" required className={styles.input}
                     autoComplete="email" inputMode="email" autoCapitalize="none" autoCorrect="off" />
-                <input name="password" type="password" placeholder="password (min 6)" required className={styles.input}
+                <input name="password" type="password" placeholder="Password (min 6 characters)" required className={styles.input}
                     autoComplete="new-password" />
                 <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>Create account</button>
             </form>

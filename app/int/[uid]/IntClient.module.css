@@ -54,6 +54,44 @@
     font-size: 12px;
 }
 
+.scopeList {
+    margin: 12px 0 18px;
+    padding: 0 8px;
+}
+
+.scopeUl {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.scopeLi {
+    display: grid;
+    gap: 2px;
+    padding: 8px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.scopeTitle {
+    font-weight: 700;
+    color: #0f172a
+}
+
+.scopeDesc {
+    color: #64748b;
+    font-size: 13px
+}
+
+@media (prefers-color-scheme: dark) {
+    .scopeLi { background: #0b1220; border-color: #1f2937 }
+    .scopeTitle { color: #e5e7eb }
+    .scopeDesc { color: #9ca3af }
+}
+
 .providersGrid {
     display: grid;
     grid-template-columns: 1fr 1fr;
