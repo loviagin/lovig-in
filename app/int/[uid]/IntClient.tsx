@@ -11,7 +11,7 @@ type IntDetails = {
     params: Record<string, string>;
     session?: { accountId?: string } | null;
     clientName?: string;  // ← новое поле
-  };
+};
 
 export default function IntClient({ uid }: { uid: string }) {
     const [details, setDetails] = useState<IntDetails | null>(null);
@@ -76,12 +76,12 @@ export default function IntClient({ uid }: { uid: string }) {
                 {(() => {
                     const scopes = (details.params.scope || 'openid').split(/\s+/).filter(Boolean);
                     const explanations: Record<string, { title: string; desc: string }> = {
-                        openid: { title: 'Basic identity', desc: 'Basic Profile Information' },
-                        profile: { title: 'Public profile', desc: 'Name, avatar, and public information of your profile (without private data).' },
-                        email: { title: 'Email address', desc: 'Access to your email and its verification status.' },
-                        phone: { title: 'Phone number', desc: 'Access to your phone number and its verification status.' },
-                        address: { title: 'Address', desc: 'Access to your address (country/city/street), if you filled it.' },
-                        offline_access: { title: 'Offline access', desc: 'Right to receive an updated access without your involvement (refresh token).' },
+                        openid: { title: 'Basic identity', desc: 'Basic profile information.' },
+                        profile: { title: 'Public profile', desc: 'Name and public profile data.' },
+                        email: { title: 'Email address', desc: 'Email and verification status.' },
+                        phone: { title: 'Phone number', desc: 'Phone and verification status.' },
+                        address: { title: 'Address', desc: 'Address details if provided.' },
+                        offline_access: { title: 'Offline access', desc: 'Refresh tokens to stay signed in.' },
                     };
                     return (
                         <section className={styles.scopeList} aria-label="Requested permissions">
@@ -155,15 +155,39 @@ export default function IntClient({ uid }: { uid: string }) {
                     </picture>
                 </header>
                 <h1 className={styles.title}>Sign in {appName ? `to ${appName}` : ''}</h1>
-                <form method="post" action={`/interaction/${uid}/login`} className={styles.form}>
-                    <input name="email" type="email" placeholder="Your email" required className={styles.input}
-                        autoComplete="email" inputMode="email" autoCapitalize="none" autoCorrect="off" />
-                    <input name="password" type="password" placeholder="Password" required className={styles.input}
-                        autoComplete="current-password" />
-                    <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>Sign in</button>
-                </form>
-                <div className={styles.helper} />
-                <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => setView('signup')}>Create account instead</button>
+                <section key="login">
+                    <form method="post" action={`/interaction/${uid}/login`} className={styles.form} autoComplete="on">
+                        <input
+                            name="email"
+                            type="email"
+                            placeholder="Your email"
+                            required
+                            className={styles.input}
+                            autoComplete="section-login username email"
+                            inputMode="email"
+                            autoCapitalize="none"
+                            autoCorrect="off"
+                        />
+                        <input
+                            name="password"
+                            type="password"
+                            placeholder="Password"
+                            required
+                            className={styles.input}
+                            autoComplete="section-login current-password"
+                        />
+                        <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>Sign in</button>
+                    </form>
+
+                    <div className={styles.helper} />
+                    <button
+                        type="button"
+                        className={`${styles.btn} ${styles.btnSecondary}`}
+                        onClick={() => setView('signup')}
+                    >
+                        Create account instead
+                    </button>
+                </section>
             </main>
         );
     }
@@ -178,17 +202,47 @@ export default function IntClient({ uid }: { uid: string }) {
                 </picture>
             </header>
             <h1 className={styles.title}>Create account {appName ? `for ${appName}` : ''}</h1>
-            <form method="post" action={`/interaction/${uid}/signup`} className={styles.form}>
-                <input name="name" placeholder="Your name" className={styles.input}
-                    autoComplete="name" autoCapitalize="words" autoCorrect="off" />
-                <input name="email" type="email" placeholder="Enter email" required className={styles.input}
-                    autoComplete="email" inputMode="email" autoCapitalize="none" autoCorrect="off" />
-                <input name="password" type="password" placeholder="Password (min 6 characters)" required className={styles.input}
-                    autoComplete="new-password" />
-                <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>Create account</button>
-            </form>
-            <div className={styles.helper} />
-            <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => setView('login')}>I already have an account</button>
+            <section key="signup">
+                <form method="post" action={`/interaction/${uid}/signup`} className={styles.form} autoComplete="on">
+                    <input
+                        name="name"
+                        placeholder="Your name"
+                        className={styles.input}
+                        autoComplete="section-signup name"
+                        autoCapitalize="words"
+                        autoCorrect="off"
+                    />
+                    <input
+                        name="email"
+                        type="email"
+                        placeholder="Enter email"
+                        required
+                        className={styles.input}
+                        autoComplete="section-signup email"
+                        inputMode="email"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                    />
+                    <input
+                        name="password"
+                        type="password"
+                        placeholder="Password (min 6 characters)"
+                        required
+                        className={styles.input}
+                        autoComplete="section-signup new-password"
+                    />
+                    <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>Create account</button>
+                </form>
+
+                <div className={styles.helper} />
+                <button
+                    type="button"
+                    className={`${styles.btn} ${styles.btnSecondary}`}
+                    onClick={() => setView('login')}
+                >
+                    I already have an account
+                </button>
+            </section>
         </main>
     );
 }
