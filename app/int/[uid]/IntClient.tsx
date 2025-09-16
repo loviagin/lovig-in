@@ -72,7 +72,6 @@ export default function IntClient({ uid }: { uid: string }) {
                 <h1 className={styles.title}>Authorize {appName ? `${appName}` : ''}</h1>
                 <p className={styles.lead}>
                     <span><b>{appName ? `${appName}` : ''}</b> requests access to:</span>
-                    &nbsp;<code>{details.params.scope ?? 'openid'}</code>
                 </p>
                 {(() => {
                     const scopes = (details.params.scope || 'openid').split(/\s+/).filter(Boolean);
