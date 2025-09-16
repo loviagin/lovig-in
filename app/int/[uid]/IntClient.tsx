@@ -17,6 +17,7 @@ export default function IntClient({ uid }: { uid: string }) {
     const [details, setDetails] = useState<IntDetails | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [busy, setBusy] = useState(false);
 
     // локальный экран
     const [view, setView] = useState<'chooser' | 'login' | 'signup'>('chooser');
@@ -52,6 +53,13 @@ export default function IntClient({ uid }: { uid: string }) {
     }, [uid]);
 
     // styles moved to CSS module
+
+    const switchView = (next: 'chooser' | 'login' | 'signup') => {
+        setBusy(true);
+        setView(next);
+        // brief lock to avoid rapid double-clicks and jank during small transitions
+        setTimeout(() => setBusy(false), 250);
+    };
 
     if (loading) return <main className={styles.shell}>Loading…</main>;
     if (error) return <main className={`${styles.shell} ${styles.error}`}>{error}</main>;
@@ -118,13 +126,13 @@ export default function IntClient({ uid }: { uid: string }) {
                 </header>
                 <h1 className={styles.title}>Continue {appName ? `to ${appName}` : ''}</h1>
                 <div className={styles.providersGrid}>
-                    <button type="button" className={`${styles.btn} ${styles.providerBtn} ${styles.btnWithIcon}`} disabled>
+                    <button type="button" className={`${styles.btn} ${styles.providerBtn} ${styles.btnWithIcon}`} disabled={busy}>
                         <span className={styles.btnInner}>
                             <FaGoogle className={styles.icon} aria-hidden="true" />
                             <span className={styles.btnLabel}>Continue with Google</span>
                         </span>
                     </button>
-                    <button type="button" className={`${styles.btn} ${styles.providerBtn} ${styles.btnWithIcon}`} disabled>
+                    <button type="button" className={`${styles.btn} ${styles.providerBtn} ${styles.btnWithIcon}`} disabled={busy}>
                         <span className={styles.btnInner}>
                             <FaApple className={styles.icon} aria-hidden="true" />
                             <span className={styles.btnLabel}>Continue with Apple</span>
@@ -133,11 +141,13 @@ export default function IntClient({ uid }: { uid: string }) {
                 </div>
                 <div className={styles.divider}><span>or</span></div>
                 <div className={styles.actions}>
-                    <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setView('signup')}>
-                        Create account with Email
+                    <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => switchView('signup')} disabled={busy}>
+                        {busy ? <span className={styles.spinner} aria-hidden="true" /> : null}
+                        <span>Create account with Email</span>
                     </button>
-                    <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => setView('login')}>
-                        Sign in with Email
+                    <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => switchView('login')} disabled={busy}>
+                        {busy ? <span className={styles.spinner} aria-hidden="true" /> : null}
+                        <span>Sign in with Email</span>
                     </button>
                 </div>
             </main>
@@ -156,7 +166,7 @@ export default function IntClient({ uid }: { uid: string }) {
                 </header>
                 <h1 className={styles.title}>Sign in {appName ? `to ${appName}` : ''}</h1>
                 <section key="login">
-                    <form method="post" action={`/interaction/${uid}/login`} className={styles.form} autoComplete="on">
+                    <form method="post" action={`/interaction/${uid}/login`} className={styles.form} autoComplete="on" onSubmit={() => setBusy(true)}>
                         <input
                             name="email"
                             type="email"
@@ -176,16 +186,21 @@ export default function IntClient({ uid }: { uid: string }) {
                             className={styles.input}
                             autoComplete="section-login current-password"
                         />
-                        <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>Sign in</button>
+                        <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={busy}>
+                            {busy ? <span className={styles.spinner} aria-hidden="true" /> : null}
+                            <span>Sign in</span>
+                        </button>
                     </form>
 
                     <div className={styles.helper} />
                     <button
                         type="button"
                         className={`${styles.btn} ${styles.btnSecondary}`}
-                        onClick={() => setView('signup')}
+                        onClick={() => switchView('signup')}
+                        disabled={busy}
                     >
-                        Create account instead
+                        {busy ? <span className={styles.spinner} aria-hidden="true" /> : null}
+                        <span>Create account instead</span>
                     </button>
                 </section>
             </main>
@@ -203,7 +218,7 @@ export default function IntClient({ uid }: { uid: string }) {
             </header>
             <h1 className={styles.title}>Create account {appName ? `for ${appName}` : ''}</h1>
             <section key="signup">
-                <form method="post" action={`/interaction/${uid}/signup`} className={styles.form} autoComplete="on">
+                <form method="post" action={`/interaction/${uid}/signup`} className={styles.form} autoComplete="on" onSubmit={() => setBusy(true)}>
                     <input
                         name="name"
                         placeholder="Your name"
@@ -231,16 +246,21 @@ export default function IntClient({ uid }: { uid: string }) {
                         className={styles.input}
                         autoComplete="section-signup new-password"
                     />
-                    <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>Create account</button>
+                    <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={busy}>
+                        {busy ? <span className={styles.spinner} aria-hidden="true" /> : null}
+                        <span>Create account</span>
+                    </button>
                 </form>
 
                 <div className={styles.helper} />
                 <button
                     type="button"
                     className={`${styles.btn} ${styles.btnSecondary}`}
-                    onClick={() => setView('login')}
+                    onClick={() => switchView('login')}
+                    disabled={busy}
                 >
-                    I already have an account
+                    {busy ? <span className={styles.spinner} aria-hidden="true" /> : null}
+                    <span>I already have an account</span>
                 </button>
             </section>
         </main>
