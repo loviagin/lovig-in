@@ -6,7 +6,9 @@ import { Pool } from 'pg';
 import argon2 from 'argon2';
 import { parse } from 'node:url';
 import fs from 'node:fs';
+
 import PgAdapter from './server/pg-adapter.mjs';
+import clients from './server/oidc-clients';
 
 const ISSUER = process.env.ISSUER_URL; // например: https://auth.lovig.in/api/oidc
 const COOKIE_SECRET = process.env.COOKIE_SECRET;
@@ -58,29 +60,7 @@ async function main() {
             Grant: 60 * 60 * 24 * 7,      // 7 дней (consent grant)
             Interaction: 60 * 10,
         },
-        clients: [
-            {
-                client_id: 'demo-web',
-                client_name: 'Demo Web',
-                redirect_uris: [`${ISSUER}/cb`],
-                post_logout_redirect_uris: ['https://auth.lovig.in'],
-                response_types: ['code'],
-                grant_types: ['authorization_code', 'refresh_token'],
-                token_endpoint_auth_method: 'none',
-                id_token_signed_response_alg: 'ES256',
-            },
-            {
-                client_id: 'demo-ios',
-                client_name: 'Learnsy App',
-                application_type: 'native',
-                redirect_uris: ['com.lovigin.ios.Skillify://oidc'],
-                post_logout_redirect_uris: ['https://auth.lovig.in'],
-                token_endpoint_auth_method: 'none',
-                response_types: ['code'],
-                grant_types: ['authorization_code', 'refresh_token'],
-                id_token_signed_response_alg: 'ES256',
-            },
-        ],
+        clients,
         claims: {
             openid: ['sub'],
             email: ['email', 'email_verified'],
