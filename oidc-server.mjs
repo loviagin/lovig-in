@@ -130,13 +130,14 @@ async function main() {
     });
 
     configuration.renderError = (ctx, out, err) => {
-        ctx.type = 'text/plain; charset=utf-8';
-        ctx.body = `OIDC error
-  name=${err?.name}
-  message=${err?.message}
-  detail=${err?.error_description || ''}
-  state=${ctx.oidc?.params?.state || '-'}
-  client=${ctx.oidc?.params?.client_id || '-'}`;
+        const code = err?.error || err?.name || 'server_error';
+        const msg = err?.error_description || err?.message || '';
+        const state = ctx.oidc?.params?.state || '';
+        const clientId = ctx.oidc?.params?.client_id || '';
+
+        const to = `/int/error?code=${encodeURIComponent(code)}&message=${encodeURIComponent(msg)}&state=${encodeURIComponent(state)}&client_id=${encodeURIComponent(clientId)}`;
+        ctx.status = 302;
+        ctx.redirect(to);
     };
 
     provider.proxy = true;
@@ -229,8 +230,8 @@ async function main() {
                     res.end(JSON.stringify(out));
                 } catch (e) {
                     console.error('[details] failed', e);
-                    res.writeHead(400, { 'content-type': 'application/json' });
-                    res.end(JSON.stringify({ error: 'interaction_fetch_failed', message: String(e?.message || e) }));
+                    res.writeHead(303, { Location: `/int/${uidFromPath}?err=login_failed` });
+                    res.end();
                 }
             })();
             return;
@@ -254,14 +255,12 @@ async function main() {
                     const password = String(form.password || '').trim();
 
                     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                        res.writeHead(400, { 'content-type': 'application/json' });
-                        res.end(JSON.stringify({ error: 'invalid_request', message: 'invalid email' }));
+                        res.writeHead(303, { Location: `/int/${uidFromPath}?err=invalid_email` });
+                        res.end();
                         return;
                     }
                     if (!email || !password) {
-                        res.writeHead(400, { 'content-type': 'application/json' });
-                        res.end(JSON.stringify({ error: 'invalid_request', message: 'email & password required' }));
-                        return;
+                        res.writeHead(303, { Location: `/int/${uidFromPath}?err=missing_fields` }); res.end(); return;
                     }
 
                     const { rows } = await pool.query(
@@ -269,16 +268,14 @@ async function main() {
                         [email]
                     );
                     if (!rows[0]) {
-                        res.writeHead(400, { 'content-type': 'application/json' });
-                        res.end(JSON.stringify({ error: 'invalid_credentials' }));
+                        res.writeHead(303, { Location: `/int/${uidFromPath}?err=invalid_credentials` });
+                        res.end();
                         return;
                     }
 
                     if (!(await argon2.verify(rows[0].password_hash, password))) {
                         await new Promise(r => setTimeout(r, 500));
-                        res.writeHead(400, { 'content-type': 'application/json' });
-                        res.end(JSON.stringify({ error: 'invalid_credentials' }));
-                        return;
+                        res.writeHead(303, { Location: `/int/${uidFromPath}?err=invalid_credentials` }); res.end(); return;
                     }
 
                     const result = { login: { accountId: rows[0].id } };
@@ -286,8 +283,9 @@ async function main() {
                     console.log('[login] finished ok', { uidFromPath, accountId: rows[0].id });
                 } catch (e) {
                     console.error('[login] failed', e);
-                    res.writeHead(400, { 'content-type': 'application/json' });
-                    res.end(JSON.stringify({ error: 'login_failed', message: String(e?.message || e) }));
+                    res.writeHead(303, { Location: `/int/${uidFromPath}?err=login_failed` }); 
+                    res.end(); 
+                    return;
                 }
             })();
             return;
@@ -312,13 +310,11 @@ async function main() {
                     const password = (form.password ?? '').toString();
 
                     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                        res.writeHead(400, { 'content-type': 'application/json' });
-                        res.end(JSON.stringify({ error: 'invalid_request', message: 'invalid email' }));
-                        return;
+                        res.writeHead(303, { Location: `/int/${details.uid}?err=invalid_email` }); res.end(); return;
                     }
                     if (!password || password.length < 6) {
-                        res.writeHead(400, { 'content-type': 'application/json' });
-                        res.end(JSON.stringify({ error: 'invalid_request', message: 'password too short' }));
+                        res.writeHead(303, { Location: `/int/${details.uid}?err=weak_password` });
+                        res.end();
                         return;
                     }
 
@@ -343,8 +339,9 @@ async function main() {
                     await provider.interactionFinished(req, res, result, { mergeWithLastSubmission: false });
                 } catch (e) {
                     console.error('[signup] failed', e);
-                    res.writeHead(400, { 'content-type': 'application/json' });
-                    res.end(JSON.stringify({ error: 'signup_failed', message: String(e?.message || e) }));
+                    res.writeHead(303, { Location: `/int/${m2b[1]}?err=signup_failed` }); 
+                    res.end(); 
+                    return;
                 }
             })();
             return;
@@ -375,8 +372,9 @@ async function main() {
                         req, res, { consent: { grantId } }, { mergeWithLastSubmission: true }
                     );
                 } catch (e) {
-                    res.writeHead(400, { 'content-type': 'application/json' });
-                    res.end(JSON.stringify({ error: 'consent_failed', message: String(e?.message || e) }));
+                    res.writeHead(302, { Location: `/int/error?code=consent_failed&message=${encodeURIComponent(String(e?.message || e))}` });
+                    res.end(); 
+                    return;
                 }
             })();
             return;
