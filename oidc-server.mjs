@@ -8,7 +8,7 @@ import { parse } from 'node:url';
 import fs from 'node:fs';
 
 import PgAdapter from './server/pg-adapter.mjs';
-import clients from './server/oidc-clients';
+import clients from './server/oidc-clients.js';
 
 const ISSUER = process.env.ISSUER_URL; // например: https://auth.lovig.in/api/oidc
 const COOKIE_SECRET = process.env.COOKIE_SECRET;
