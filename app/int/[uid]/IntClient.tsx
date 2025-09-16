@@ -76,7 +76,6 @@ export default function IntClient({ uid }: { uid: string }) {
             <main className={styles.shell}>
                 <h1 className={styles.title}>Continue</h1>
                 <div className={styles.providersGrid}>
-                    {/* Соцсети — пока как заглушки; позже подставишь ссылки */}
                     <button type="button" className={`${styles.btn} ${styles.providerBtn}`} disabled>Continue with Google (soon)</button>
                     <button type="button" className={`${styles.btn} ${styles.providerBtn}`} disabled>Continue with Apple (soon)</button>
                 </div>
