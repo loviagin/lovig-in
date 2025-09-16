@@ -1,4 +1,4 @@
-// pg-adapter.mjs
+// server/pg-adapter.mjs
 export default class PgAdapter {
     constructor(name, pool) {
         this.name = name;      // "Session", "AccessToken", "RefreshToken", ...
