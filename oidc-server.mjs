@@ -49,8 +49,14 @@ async function main() {
                 return `/interaction/${i.uid}${wantsSignup ? '?screen=signup' : ''}`;
             },
         },
-        ttl: { Session: 60 * 60 * 24 * 7, Interaction: 60 * 10 },
-
+        ttl: {
+            AccessToken: 60 * 60,         // 1 час
+            IdToken: 60 * 10,             // 10 минут
+            Session: 60 * 60 * 24 * 7,    // 7 дней (cookie сессия)
+            RefreshToken: 60 * 60 * 24 * 30, // 30 дней
+            Grant: 60 * 60 * 24 * 7,      // 7 дней (consent grant)
+            Interaction: 60 * 10,
+        },
         clients: [
             {
                 client_id: 'demo-web',
@@ -74,13 +80,11 @@ async function main() {
                 id_token_signed_response_alg: 'ES256',
             },
         ],
-
         claims: {
             openid: ['sub'],
             email: ['email', 'email_verified'],
             profile: ['name'],
         },
-
         findAccount: async (ctx, sub) => {
             return {
                 accountId: sub,
