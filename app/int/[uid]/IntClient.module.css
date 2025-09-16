@@ -245,8 +245,10 @@
 }
 
 .logo {
-    width: 210px;
     height: 36px;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
 }
 
 .helper {
