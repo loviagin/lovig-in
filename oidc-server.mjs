@@ -53,7 +53,7 @@ async function main() {
         clients: [
             {
                 client_id: 'demo-web',
-                // client_name: 'Demo Web',
+                client_name: 'Demo Web',
                 redirect_uris: [`${ISSUER}/cb`],
                 post_logout_redirect_uris: ['https://auth.lovig.in'],
                 response_types: ['code'],
@@ -63,7 +63,7 @@ async function main() {
             },
             {
                 client_id: 'demo-ios',
-                // client_name: 'Learnsy App', 
+                client_name: 'Learnsy App',
                 application_type: 'native',
                 redirect_uris: ['com.lovigin.ios.Skillify://oidc'],
                 post_logout_redirect_uris: ['https://auth.lovig.in'],
@@ -199,16 +199,26 @@ async function main() {
                         prompt = { ...prompt, name: 'signup' };
                     }
 
+                    let clientName = params.client_id;
+                    try {
+                        const client = await provider.Client.find(params.client_id);
+                        const metaName =
+                            (client && typeof client.clientName === 'string' && client.clientName) ||
+                            (client && client.metadata && typeof client.metadata.client_name === 'string' && client.metadata.client_name);
+                        if (metaName && metaName.trim()) clientName = metaName.trim();
+                    } catch { /* ignore */ }
+
                     const out = {
                         uid: details.uid,
                         prompt,
                         params,
                         session,
-                        // clientName: client?.clientName || params.client_id, // ← вот это
-                      };
+                        clientName,
+                    };
                     res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
                     res.end(JSON.stringify(out));
                 } catch (e) {
+                    console.error('[details] failed', e);
                     res.writeHead(400, { 'content-type': 'application/json' });
                     res.end(JSON.stringify({ error: 'interaction_fetch_failed', message: String(e?.message || e) }));
                 }
