@@ -1,7 +1,8 @@
 // app/int/[uid]/IntClient.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { FaApple, FaGoogle } from 'react-icons/fa6';
 import styles from './IntClient.module.css';
 
@@ -14,6 +15,8 @@ type IntDetails = {
 };
 
 export default function IntClient({ uid }: { uid: string }) {
+    const sp = useSearchParams();
+    const router = useRouter();
     const [details, setDetails] = useState<IntDetails | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -21,6 +24,17 @@ export default function IntClient({ uid }: { uid: string }) {
 
     // локальный экран
     const [view, setView] = useState<'chooser' | 'login' | 'signup'>('chooser');
+
+    // Static error map used on the login view (declared at top-level to keep hooks order stable)
+    const loginErrorMessages: Record<string, string> = useMemo(() => ({
+        invalid_email: 'Incorrect e-mail',
+        missing_fields: 'Fill in all the fields',
+        invalid_credentials: 'Incorrect email or password',
+        weak_password: 'The password is too short',
+        email_exists: 'The mail has already been registered',
+        login_failed: 'Couldn\'t log in. Try again',
+        signup_failed: 'Couldn\'t create an account. Try again',
+    }), []);
 
     useEffect(() => {
         let abort = false;
@@ -32,25 +46,30 @@ export default function IntClient({ uid }: { uid: string }) {
                     credentials: 'include',
                     cache: 'no-store',
                 });
-                if (!res.ok) throw new Error(`GET /interaction/${uid}/details failed: ${res.status}`);
-                const data = (await res.json()) as IntDetails;
+                if (!res.ok) {
+                    router.replace(`/int/error?code=interaction_fetch_failed&message=HTTP%20${res.status}`);
+                    return;
+                }
+                const data = (await res.json()) as (IntDetails & { error?: string; message?: string });
+                if (data?.error) {
+                    router.replace(`/int/error?code=${encodeURIComponent(data.error)}&message=${encodeURIComponent(data.message || '')}`);
+                    return;
+                }
                 if (!abort) {
-                    setDetails(data);
+                    setDetails(data as IntDetails);
                     // если провайдер требует consent — сразу показываем consent
                     if (data.prompt.name === 'consent') setView('login'); // значение не важно, ниже отрендерим consent
                     else setView('chooser'); // иначе начнем с chooser
                 }
             } catch (e: unknown) {
-                if (!abort) {
-                    const msg = e instanceof Error ? e.message : String(e);
-                    setError(msg);
-                }
+                const msg = e instanceof Error ? e.message : String(e);
+                router.replace(`/int/error?code=interaction_fetch_failed&message=${encodeURIComponent(msg)}`);
             } finally {
                 if (!abort) setLoading(false);
             }
         })();
         return () => { abort = true; };
-    }, [uid]);
+    }, [uid, router]);
 
     // styles moved to CSS module
 
@@ -156,6 +175,8 @@ export default function IntClient({ uid }: { uid: string }) {
 
     // LOGIN (email)
     if (view === 'login') {
+        const err = sp.get('err');
+        const alert = (text: string) => (<div className={styles.alert}>{text}</div>);
         return (
             <main className={styles.shell}>
                 <header className={styles.header}>
@@ -166,6 +187,7 @@ export default function IntClient({ uid }: { uid: string }) {
                 </header>
                 <h1 className={styles.title}>Sign in {appName ? `to ${appName}` : ''}</h1>
                 <section key="login">
+                    {err && loginErrorMessages[err] ? alert(loginErrorMessages[err]) : null}
                     <form method="post" action={`/interaction/${uid}/login`} className={styles.form} autoComplete="on" onSubmit={() => setBusy(true)}>
                         <input
                             name="email"
@@ -218,6 +240,7 @@ export default function IntClient({ uid }: { uid: string }) {
             </header>
             <h1 className={styles.title}>Create account {appName ? `for ${appName}` : ''}</h1>
             <section key="signup">
+                {(() => { const err = sp.get('err'); const m: Record<string, string> = { invalid_email: 'Incorrect e-mail.', missing_fields: 'Fill in all the fields.', invalid_credentials: 'Incorrect email or password.', weak_password: 'The password is too short.', email_exists: 'The mail has already been registered.', login_failed: 'Couldn\'t log in. Try again.', signup_failed: 'Couldn\'t create an account. Try again.' }; return err && m[err] ? (<div className={styles.alert}>{m[err]}</div>) : null; })()}
                 <form method="post" action={`/interaction/${uid}/signup`} className={styles.form} autoComplete="on" onSubmit={() => setBusy(true)}>
                     <input
                         name="name"

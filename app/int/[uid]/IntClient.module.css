@@ -253,6 +253,19 @@
     height: 8px
 }
 
+.alert {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #7f1d1d;
+    background: #2a1a1a;
+    color: #fca5a5;
+    text-align: left
+}
+
+@media (prefers-color-scheme: dark) {
+    .alert { border-color: #7f1d1d; background: #1c1212; color: #fca5a5 }
+}
+
 @media (min-width: 768px) {
     .shell {
         max-width: 560px;
