@@ -15,6 +15,7 @@ const JWKS_LOCATION = process.env.JWKS_LOCATION;
 if (!ISSUER) throw new Error('ISSUER_URL env is required');
 if (!COOKIE_SECRET) throw new Error('COOKIE_SECRET env is required');
 if (!JWKS_LOCATION) throw new Error('JWKS_LOCATION env is required');
+if (!RESERVE_ROTATION_KEY) throw new Error('RESERVE_ROTATION_KEY env is required');
 
 async function main() {
     const jwks = JSON.parse(fs.readFileSync(JWKS_LOCATION, 'utf8'));
