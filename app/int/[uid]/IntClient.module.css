@@ -241,11 +241,15 @@
 @media (min-width: 768px) {
     .shell {
         max-width: 560px;
-        padding: 40px 24px
+        padding: 2rem 1.5rem;
     }
 }
 
 @media (max-width:480px) {
+    .shell {
+        padding: 2rem;
+    }
+
     .providersGrid {
         grid-template-columns: 1fr
     }
