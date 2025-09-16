@@ -7,10 +7,11 @@ import styles from './IntClient.module.css';
 
 type IntDetails = {
     uid: string;
-    prompt: { name: 'login' | 'consent' | string }; // signup НЕ обязателен в policy
+    prompt: { name: 'login' | 'signup' | 'consent' | string };
     params: Record<string, string>;
     session?: { accountId?: string } | null;
-};
+    clientName?: string;  // ← новое поле
+  };
 
 export default function IntClient({ uid }: { uid: string }) {
     const [details, setDetails] = useState<IntDetails | null>(null);
@@ -56,6 +57,8 @@ export default function IntClient({ uid }: { uid: string }) {
     if (error) return <main className={`${styles.shell} ${styles.error}`}>{error}</main>;
     if (!details) return null;
 
+    const appName = details.clientName || details.params.client_id;
+
     // CONSENT (если нужен) — приоритетно, не подменяем локальным view
     if (details.prompt.name === 'consent') {
         return (
@@ -66,7 +69,7 @@ export default function IntClient({ uid }: { uid: string }) {
                         <img src="/logo.webp" alt="LOVIGIN" className={styles.logo} />
                     </picture>
                 </header>
-                <h1 className={styles.title}>Authorize</h1>
+                <h1 className={styles.title}>Authorize {appName ? `“${appName}”` : ''}</h1>
                 <p>
                     App <b>{details.params.client_id}</b> requests: <code>{details.params.scope ?? 'openid'}</code>
                 </p>
@@ -87,7 +90,7 @@ export default function IntClient({ uid }: { uid: string }) {
                         <img src="/logo.webp" alt="LOVIGIN" className={styles.logo} />
                     </picture>
                 </header>
-                <h1 className={styles.title}>Continue</h1>
+                <h1 className={styles.title}>Continue {appName ? `to “${appName}”` : ''}</h1>
                 <div className={styles.providersGrid}>
                     <button type="button" className={`${styles.btn} ${styles.providerBtn} ${styles.btnWithIcon}`} disabled>
                         <span className={styles.btnInner}>
@@ -125,7 +128,7 @@ export default function IntClient({ uid }: { uid: string }) {
                         <img src="/logo.webp" alt="LOVIGIN" className={styles.logo} />
                     </picture>
                 </header>
-                <h1 className={styles.title}>Sign in</h1>
+                <h1 className={styles.title}>Sign in {appName ? `to “${appName}”` : ''}</h1>
                 <form method="post" action={`/interaction/${uid}/login`} className={styles.form}>
                     <input name="email" type="email" placeholder="email" required className={styles.input}
                         autoComplete="email" inputMode="email" autoCapitalize="none" autoCorrect="off" />
@@ -148,7 +151,7 @@ export default function IntClient({ uid }: { uid: string }) {
                     <img src="/logo.webp" alt="LOVIGIN" className={styles.logo} />
                 </picture>
             </header>
-            <h1 className={styles.title}>Create account</h1>
+            <h1 className={styles.title}>Create account {appName ? `for “${appName}”` : ''}</h1>
             <form method="post" action={`/interaction/${uid}/signup`} className={styles.form}>
                 <input name="name" placeholder="name" className={styles.input}
                     autoComplete="name" autoCapitalize="words" autoCorrect="off" />

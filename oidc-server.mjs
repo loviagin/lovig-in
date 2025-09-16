@@ -53,6 +53,7 @@ async function main() {
         clients: [
             {
                 client_id: 'demo-web',
+                client_name: 'Demo Web',
                 redirect_uris: [`${ISSUER}/cb`],
                 post_logout_redirect_uris: ['https://auth.lovig.in'],
                 response_types: ['code'],
@@ -62,6 +63,7 @@ async function main() {
             },
             {
                 client_id: 'demo-ios',
+                client_name: 'Learnsy App', 
                 application_type: 'native',
                 redirect_uris: ['com.lovigin.ios.Skillify://oidc'],
                 post_logout_redirect_uris: ['https://auth.lovig.in'],
@@ -199,10 +201,11 @@ async function main() {
 
                     const out = {
                         uid: details.uid,
-                        prompt,        // { name: 'login' | 'signup' | 'consent', ... } (с учётом форса)
-                        params,        // client_id, scope, redirect_uri, prompt, ...
+                        prompt,
+                        params,
                         session,
-                    };
+                        clientName: client?.clientName || params.client_id, // ← вот это
+                      };
                     res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
                     res.end(JSON.stringify(out));
                 } catch (e) {

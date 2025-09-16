@@ -1,15 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Nunito } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const nunito = Nunito({
+  variable: "--font-body",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["300","400","600","700","800","900"],
 });
 
 export const metadata: Metadata = {
@@ -21,12 +17,6 @@ export const metadata: Metadata = {
   robots: {
     index: false,
     follow: false,
-  },
-  openGraph: {
-    type: 'website',
-    title: 'LOVIGIN ONE LOGIN',
-    description: 'One Login Page for all LOVIGIN Apps',
-    images: ['/favicon.ico'],
   },
   alternates: {
     canonical: 'https://auth.lovig.in',
@@ -41,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={nunito.variable}>
         {children}
       </body>
     </html>
