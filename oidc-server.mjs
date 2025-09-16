@@ -256,12 +256,12 @@ async function main() {
                     const password = String(form.password || '').trim();
 
                     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                        res.writeHead(303, { Location: `/int/${uidFromPath}?err=invalid_email` });
+                        res.writeHead(303, { Location: `/int/${uidFromPath}?screen=login&err=invalid_email` });
                         res.end();
                         return;
                     }
                     if (!email || !password) {
-                        res.writeHead(303, { Location: `/int/${uidFromPath}?err=missing_fields` }); res.end(); return;
+                        res.writeHead(303, { Location: `/int/${uidFromPath}?screen=login&err=missing_fields` }); res.end(); return;
                     }
 
                     const { rows } = await pool.query(
@@ -269,14 +269,14 @@ async function main() {
                         [email]
                     );
                     if (!rows[0]) {
-                        res.writeHead(303, { Location: `/int/${uidFromPath}?err=invalid_credentials` });
+                        res.writeHead(303, { Location: `/int/${uidFromPath}?screen=login&err=invalid_credentials` });
                         res.end();
                         return;
                     }
 
                     if (!(await argon2.verify(rows[0].password_hash, password))) {
                         await new Promise(r => setTimeout(r, 500));
-                        res.writeHead(303, { Location: `/int/${uidFromPath}?err=invalid_credentials` }); res.end(); return;
+                        res.writeHead(303, { Location: `/int/${uidFromPath}?screen=login&err=invalid_credentials` }); res.end(); return;
                     }
 
                     const result = { login: { accountId: rows[0].id } };
@@ -284,7 +284,7 @@ async function main() {
                     console.log('[login] finished ok', { uidFromPath, accountId: rows[0].id });
                 } catch (e) {
                     console.error('[login] failed', e);
-                    res.writeHead(303, { Location: `/int/${uidFromPath}?err=login_failed` }); 
+                    res.writeHead(303, { Location: `/int/${uidFromPath}?screen=login&err=login_failed` }); 
                     res.end(); 
                     return;
                 }
@@ -311,10 +311,10 @@ async function main() {
                     const password = (form.password ?? '').toString();
 
                     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                        res.writeHead(303, { Location: `/int/${details.uid}?err=invalid_email` }); res.end(); return;
+                        res.writeHead(303, { Location: `/int/${details.uid}?screen=signup&err=invalid_email` }); res.end(); return;
                     }
                     if (!password || password.length < 6) {
-                        res.writeHead(303, { Location: `/int/${details.uid}?err=weak_password` });
+                        res.writeHead(303, { Location: `/int/${details.uid}?screen=signup&err=weak_password` });
                         res.end();
                         return;
                     }
@@ -340,7 +340,7 @@ async function main() {
                     await provider.interactionFinished(req, res, result, { mergeWithLastSubmission: false });
                 } catch (e) {
                     console.error('[signup] failed', e);
-                    res.writeHead(303, { Location: `/int/${m2b[1]}?err=signup_failed` }); 
+                    res.writeHead(303, { Location: `/int/${m2b[1]}?screen=signup&err=signup_failed` }); 
                     res.end(); 
                     return;
                 }

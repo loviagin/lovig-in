@@ -6,6 +6,9 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { FaApple, FaGoogle } from 'react-icons/fa6';
 import styles from './IntClient.module.css';
 
+const LOGIN_ERRS = new Set(['invalid_email','missing_fields','invalid_credentials','login_failed']);
+const SIGNUP_ERRS = new Set(['invalid_email','missing_fields','weak_password','email_exists','signup_failed']);
+
 type IntDetails = {
     uid: string;
     prompt: { name: 'login' | 'signup' | 'consent' | string };
@@ -24,6 +27,8 @@ export default function IntClient({ uid }: { uid: string }) {
 
     // локальный экран
     const [view, setView] = useState<'chooser' | 'login' | 'signup'>('chooser');
+    const screenParam = sp.get('screen');  // 'login' | 'signup' | null
+    const errParam = sp.get('err');        // код ошибки или null
 
     // Static error map used on the login view (declared at top-level to keep hooks order stable)
     const loginErrorMessages: Record<string, string> = useMemo(() => ({
@@ -42,6 +47,13 @@ export default function IntClient({ uid }: { uid: string }) {
             try {
                 setLoading(true);
                 setError(null);
+
+                // 1) предустановим view по URL ещё до сети — чтобы не было “мигания”
+                if (screenParam === 'login' || (errParam && LOGIN_ERRS.has(errParam))) setView('login');
+                else if (screenParam === 'signup' || (errParam && SIGNUP_ERRS.has(errParam))) setView('signup');
+                else setView('chooser');
+
+                // 2) тянем детали интеракции
                 const res = await fetch(`/interaction/${uid}/details`, {
                     credentials: 'include',
                     cache: 'no-store',
@@ -57,9 +69,12 @@ export default function IntClient({ uid }: { uid: string }) {
                 }
                 if (!abort) {
                     setDetails(data as IntDetails);
-                    // если провайдер требует consent — сразу показываем consent
-                    if (data.prompt.name === 'consent') setView('login'); // значение не важно, ниже отрендерим consent
-                    else setView('chooser'); // иначе начнем с chooser
+                    // 3) если провайдер требует consent — показываем его приоритетно
+                    if (data.prompt.name === 'consent') {
+                        setView('login'); // значение неважно — ниже рендерим ветку consent
+                    } else {
+                        // иначе - НЕ трогаем view, которое уже выбрали по screen/err
+                    }
                 }
             } catch (e: unknown) {
                 const msg = e instanceof Error ? e.message : String(e);
@@ -69,7 +84,7 @@ export default function IntClient({ uid }: { uid: string }) {
             }
         })();
         return () => { abort = true; };
-    }, [uid, router]);
+    }, [uid, router, screenParam, errParam]);
 
     // styles moved to CSS module
 
