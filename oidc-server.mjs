@@ -27,7 +27,6 @@ async function main() {
             devInteractions: { enabled: false },
             rpInitiatedLogout: { enabled: true },
             revocation: { enabled: true },
-            reuseDetection: { enabled: true },
         },
         logoutSource(ctx, form) {
             ctx.type = 'html';
