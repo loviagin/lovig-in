@@ -6,7 +6,7 @@ import { Pool } from 'pg';
 import argon2 from 'argon2';
 import { parse } from 'node:url';
 import fs from 'node:fs';
-import PgAdapter from './pg-adapter.mjs';
+import PgAdapter from './server/pg-adapter.mjs';
 
 const ISSUER = process.env.ISSUER_URL; // например: https://auth.lovig.in/api/oidc
 const COOKIE_SECRET = process.env.COOKIE_SECRET;
