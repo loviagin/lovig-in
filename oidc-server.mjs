@@ -93,9 +93,8 @@ state=${query.state}
             const m = pathname.match(/^\/interaction\/([^/]+)\/apple\/start$/);
             if (m) { return await appleStart(provider, req, res, m[1]); }
         }
-
-        // Apple callback — примем и /interaction/apple/cb, и /api/oidc/interaction/apple/cb
-        if (req.method === 'GET' && (
+        // Apple callback
+        if ((req.method === 'POST' || req.method === 'GET') && (
             pathname === '/interaction/apple/cb' ||
             pathname === '/api/oidc/interaction/apple/cb'
         )) {
