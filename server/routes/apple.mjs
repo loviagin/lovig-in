@@ -40,7 +40,7 @@ async function buildClientSecret() {
 function appleAuthUrl(params) {
     const u = new URL(APPLE_AUTHZ);
     u.searchParams.set('response_type', 'code');
-    u.searchParams.set('response_mode', 'form_post'); // чтобы имя пришло в POST-е
+    u.searchParams.set('response_mode', 'query');
     u.searchParams.set('client_id', APPLE_CLIENT_ID);
     u.searchParams.set('redirect_uri', APPLE_REDIRECT_URI);
     u.searchParams.set('scope', 'name email');
@@ -93,25 +93,28 @@ async function verifyIdToken(idToken) {
 // POST /interaction/apple/cb (response_mode=form_post)  [иногда прилетит GET — тоже обработаем]
 export async function appleCallback(provider, pool, req, res, query) {
     // 1) разберём входящие параметры
-    const method = req.method.toUpperCase();
-    let code = null, state = null, userJson = null;
+    // const method = req.method.toUpperCase();
+    // let code = null, state = null, userJson = null;
 
-    if (method === 'POST') {
-        const raw = await new Promise((r, j) => { let s = ''; req.on('data', c => s += c); req.on('end', () => r(s)); req.on('error', j); });
-        const ct = (req.headers['content-type'] || '').toLowerCase();
-        const body = ct.includes('application/json')
-            ? (raw ? JSON.parse(raw) : {})
-            : Object.fromEntries(new URLSearchParams(raw));
-        code = String(body.code || '');
-        state = String(body.state || '');
-        // Apple присылает name только в "user" один раз (JSON-строка)
-        if (body.user) {
-            try { userJson = JSON.parse(String(body.user)); } catch { /* ignore */ }
-        }
-    } else { // GET fallback
-        code = String(query.code || '');
-        state = String(query.state || '');
-    }
+    // if (method === 'POST') {
+    //     const raw = await new Promise((r, j) => { let s = ''; req.on('data', c => s += c); req.on('end', () => r(s)); req.on('error', j); });
+    //     const ct = (req.headers['content-type'] || '').toLowerCase();
+    //     const body = ct.includes('application/json')
+    //         ? (raw ? JSON.parse(raw) : {})
+    //         : Object.fromEntries(new URLSearchParams(raw));
+    //     code = String(body.code || '');
+    //     state = String(body.state || '');
+    //     // Apple присылает name только в "user" один раз (JSON-строка)
+    //     if (body.user) {
+    //         try { userJson = JSON.parse(String(body.user)); } catch { /* ignore */ }
+    //     }
+    // } else { // GET fallback
+    //     code = String(query.code || '');
+    //     state = String(query.state || '');
+    // }
+
+    const code = String(query.code || '');
+    const state = String(query.state || '');
 
     if (!state) return redirect303(res, `/int/error?code=invalid_state`);
     // 2) проверим, что интеракция жива (cookie)

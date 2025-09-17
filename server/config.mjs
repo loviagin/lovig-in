@@ -17,7 +17,7 @@ export default function buildConfiguration({ pool }) {
         cookies: {
             names: { interaction: 'oidc:interaction', session: 'oidc:session' },
             keys: [COOKIE_SECRET, RESERVE_ROTATION_KEY],
-            short: { secure: true, sameSite: 'none', domain: 'auth.lovig.in', path: '/' },
+            short: { secure: true, sameSite: 'lax', domain: new URL(ISSUER).host.split(':')[0], path: '/' },
             long: { secure: true, sameSite: 'lax', domain: new URL(ISSUER).host.split(':')[0], path: '/' },
         },
         interactions: {
@@ -32,7 +32,7 @@ export default function buildConfiguration({ pool }) {
             Session: 60 * 60 * 24 * 7,
             RefreshToken: 60 * 60 * 24 * 30,
             Grant: 60 * 60 * 24 * 7,
-            Interaction: 60 * 10,
+            Interaction: 60 * 15,
         },
         clients,
         claims: {
