@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { FaApple, FaGoogle } from 'react-icons/fa6';
-import styles from './IntClient.module.css';
+import styles from './styles/IntClient.module.css';
 
 const LOGIN_ERRS = new Set(['invalid_email', 'missing_fields', 'invalid_credentials', 'login_failed']);
 const SIGNUP_ERRS = new Set(['invalid_email', 'missing_fields', 'weak_password', 'email_exists', 'signup_failed']);
@@ -182,7 +182,17 @@ export default function IntClient({ uid }: { uid: string }) {
                             <span className={styles.btnLabel}>Continue with Google</span>
                         </span>
                     </button>
-                    <button type="button" className={`${styles.btn} ${styles.providerBtn} ${styles.btnWithIcon}`} disabled={busy}>
+                    <button
+                        type="button"
+                        className={`${styles.btn} ${styles.providerBtn} ${styles.btnWithIcon}`}
+                        onClick={() => {
+                            if (busy) return;
+                            setBusy(true);
+                            location.href = `/interaction/${uid}/apple/start`;
+                        }}
+                        disabled={busy}
+                        aria-label="Continue with Apple"
+                    >
                         <span className={styles.btnInner}>
                             <FaApple className={styles.icon} aria-hidden="true" />
                             <span className={styles.btnLabel}>Continue with Apple</span>

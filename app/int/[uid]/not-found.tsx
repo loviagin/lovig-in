@@ -1,6 +1,6 @@
 'use client';
 
-import styles from './NotFound.module.css';
+import styles from './styles/NotFound.module.css';
 
 export default function NotFound() {
     const goBack = () => {

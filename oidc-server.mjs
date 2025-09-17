@@ -15,6 +15,7 @@ import {
 } from './server/routes/interactions.mjs';
 import { googleStart, googleCallback } from './server/routes/google.mjs';
 import { postForgot, postReset, getInspect } from './server/routes/password.mjs';
+import { appleStart, appleCallback } from './server/routes/apple.mjs';
 
 async function main() {
     const pool = new Pool({ connectionString: DATABASE_URL });
@@ -86,6 +87,12 @@ state=${query.state}
         }
         if (req.method === 'POST' && (pathname === '/password/reset' || pathname === '/api/oidc/password/reset')) {
             return await postReset(pool, req, res);
+        }
+        if (req.method === 'GET' && (m = pathname.match(/^\/interaction\/([^/]+)\/apple\/start$/))) {
+            return await appleStart(provider, req, res, m[1]);
+        }
+        if ((req.method === 'POST' || req.method === 'GET') && pathname === '/interaction/apple/cb') {
+            return await appleCallback(provider, pool, req, res, query);
         }
 
         // всё остальное — в provider
