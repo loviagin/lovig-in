@@ -14,6 +14,7 @@ import {
     postConfirm,
 } from './server/routes/interactions.mjs';
 import { googleStart, googleCallback } from './server/routes/google.mjs';
+import { postForgot, postReset } from './server/routes/password.mjs';
 
 async function main() {
     const pool = new Pool({ connectionString: DATABASE_URL });
@@ -76,6 +77,12 @@ state=${query.state}
         }
         if (req.method === 'GET' && pathname === '/interaction/google/cb') {
             return await googleCallback(provider, pool, req, res, query);
+        }
+        if (req.method === 'POST' && pathname === '/password/forgot') {
+            return await postForgot(pool, req, res);
+        }
+        if (req.method === 'POST' && pathname === '/password/reset') {
+            return await postReset(pool, req, res);
         }
 
         // всё остальное — в provider

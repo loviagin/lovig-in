@@ -1,0 +1,142 @@
+.shell {
+    max-width: 440px;
+    margin: 40px auto;
+    padding: 16px;
+    font-family: system-ui;
+    color: #0f172a;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06)
+}
+
+.title {
+    margin: 0 0 16px;
+    font-size: 24px;
+    line-height: 1.15;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    text-align: center;
+    color: #0f172a
+}
+
+.error {
+    color: #dc2626;
+    margin-bottom: 8px;
+    text-align: center
+}
+
+.form {
+    display: grid;
+    gap: 12px
+}
+
+.input {
+    font-size: 16px;
+    line-height: 1.4;
+    padding: 12px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff
+}
+
+.input:focus {
+    outline: none;
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 4px rgba(148, 163, 184, .2)
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 12px 14px;
+    min-height: 44px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1;
+    border: 1px solid transparent;
+    background: #0ea5e9;
+    color: #fff;
+    cursor: pointer;
+    transition: background .2s, box-shadow .2s, transform .02s;
+    position: relative;
+    gap: 10px
+}
+
+.btn:disabled {
+    opacity: .6;
+    cursor: not-allowed
+}
+
+.btn:active {
+    transform: translateY(1px)
+}
+
+.btnPrimary {
+    background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%);
+    color: #fff
+}
+
+.btnPrimary:hover {
+    background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.25)
+}
+
+.btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, .35)
+}
+
+.btnPrimary:disabled {
+    background: #3b82f6;
+    box-shadow: none
+}
+
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid currentColor;
+    border-bottom-color: transparent;
+    border-radius: 50%;
+    animation: spin .6s linear infinite
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg) }
+}
+
+@media (min-width: 768px) {
+    .shell {
+        max-width: 520px;
+        padding: 2rem 1.5rem;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .shell {
+        background: #0b1220;
+        color: #e5e7eb;
+        border-color: #1f2937;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, .35)
+    }
+
+    .title {
+        color: #f3f4f6
+    }
+
+    .input {
+        background: #0b1220;
+        border-color: #1f2937;
+        color: #e5e7eb
+    }
+
+    .input:focus {
+        border-color: #334155;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, .25)
+    }
+}
+
+

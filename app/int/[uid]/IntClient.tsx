@@ -26,7 +26,7 @@ export default function IntClient({ uid }: { uid: string }) {
     const [busy, setBusy] = useState(false);
 
     // локальный экран
-    const [view, setView] = useState<'chooser' | 'login' | 'signup'>('chooser');
+    const [view, setView] = useState<'chooser' | 'login' | 'signup' | 'forgot'>('chooser');
     const screenParam = sp.get('screen');  // 'login' | 'signup' | null
     const errParam = sp.get('err');        // код ошибки или null
 
@@ -86,7 +86,7 @@ export default function IntClient({ uid }: { uid: string }) {
         return () => { abort = true; };
     }, [uid, router, screenParam, errParam]);
 
-    const switchView = (next: 'chooser' | 'login' | 'signup') => {
+    const switchView = (next: 'chooser' | 'login' | 'signup' | 'forgot') => {
         setBusy(true);
         setView(next);
         setTimeout(() => setBusy(false), 250);
@@ -243,6 +243,14 @@ export default function IntClient({ uid }: { uid: string }) {
                             {busy ? <span className={styles.spinner} aria-hidden="true" /> : null}
                             <span>Sign in</span>
                         </button>
+
+                        <button
+                            type="button"
+                            className={styles.linkBtn}
+                            onClick={() => switchView('forgot')}
+                        >
+                            Forgot password?
+                        </button>
                     </form>
 
                     <div className={styles.helper} />
@@ -261,6 +269,44 @@ export default function IntClient({ uid }: { uid: string }) {
                     {' · '}
                     <a href="/terms" target="_blank" rel="noopener noreferrer">Terms</a>
                 </div>
+            </main>
+        );
+    }
+
+    if (view === 'forgot') {
+        return (
+            <main className={styles.shell}>
+                <Header />
+                <h1 className={styles.title}>Reset password</h1>
+                <section>
+                    <form
+                        className={styles.form}
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            const email = new FormData(e.currentTarget).get('email') as string;
+                            setBusy(true);
+                            try {
+                                await fetch('/password/forgot', {
+                                    method: 'POST',
+                                    headers: { 'content-type': 'application/json' },
+                                    body: JSON.stringify({ email }),
+                                });
+                                alert('If this email exists, we\'ll send reset link.');
+                                switchView('login');
+                            } finally { setBusy(false); }
+                        }}
+                    >
+                        <input name="email" type="email" required placeholder="Your email" className={styles.input} />
+                        <button className={`${styles.btn} ${styles.btnPrimary}`} disabled={busy}>
+                            {busy ? <span className={styles.spinner} /> : null}
+                            <span>Send reset link</span>
+                        </button>
+                    </form>
+                    <div className={styles.helper} />
+                    <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => switchView('login')}>
+                        Back to sign in
+                    </button>
+                </section>
             </main>
         );
     }
