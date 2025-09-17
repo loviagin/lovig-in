@@ -154,15 +154,23 @@ export async function appleCallback(provider, pool, req, res, query) {
                     [userId, appleSub]
                 );
             } else {
-                // 5.2 создаём нового
-                // имя можно вытянуть из userJson?.name?.firstName/lastName, но оно приходит только один раз
-                const name =
-                    (userJson?.name?.firstName || '') +
-                    (userJson?.name?.lastName ? ` ${userJson.name.lastName}` : '');
+                const firstName = userJson?.name?.firstName?.trim() || '';
+                const lastName = userJson?.name?.lastName?.trim() || '';
+                const fullName = (firstName || lastName) ? `${firstName} ${lastName}`.trim() : null;
+
+                await pool.query(
+                    `UPDATE users
+                       SET providers = ARRAY(SELECT DISTINCT unnest(coalesce(providers,'{}'::text[]) || '{apple}')),
+                           apple_sub = COALESCE(apple_sub, $2),
+                           name = COALESCE(name, $3)
+                     WHERE id = $1`,
+                    [userId, appleSub, fullName]
+                );
+                  
                 const ins = await pool.query(
                     `INSERT INTO users (email, password_hash, name, email_verified, providers, apple_sub)
-           VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-                    [email, null, name || null, true, ['apple'], appleSub]
+                     VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
+                    [email || null, null, fullName, Boolean(email), ['apple'], appleSub]
                 );
                 userId = ins.rows[0].id;
             }
