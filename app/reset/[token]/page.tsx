@@ -36,7 +36,7 @@ export default function ResetPage() {
                         return;
                     }
                     alert('Password updated. You can sign in now.');
-                    router.push('/api/oidc/auth');
+                    router.replace('/reset/success');
                 }}
             >
                 <input name="password" type="password" placeholder="New password (min 6)" required className={styles.input} />
