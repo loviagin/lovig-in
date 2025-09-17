@@ -32,16 +32,6 @@ async function main() {
     });
     provider.on('server_error', (_ctx, err) => log.error('[server_error]', err?.stack || err));
 
-    configuration.renderError = (ctx, _out, err) => {
-        const code = err?.error || err?.name || 'server_error';
-        const msg = err?.error_description || err?.message || '';
-        const state = ctx.oidc?.params?.state || '';
-        const clientId = ctx.oidc?.params?.client_id || '';
-        const to = `/int/error?code=${encodeURIComponent(code)}&message=${encodeURIComponent(msg)}&state=${encodeURIComponent(state)}&client_id=${encodeURIComponent(clientId)}`;
-        ctx.status = 302;
-        ctx.redirect(to);
-    };
-
     provider.proxy = true;
 
     const server = http.createServer(async (req, res) => {
