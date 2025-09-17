@@ -1,0 +1,70 @@
+.shell {
+    max-width: 840px;
+    margin: 40px auto;
+    padding: 0 16px;
+}
+
+.card {
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.title {
+    font-size: 32px;
+    font-weight: 800;
+    margin: 0 0 12px;
+    letter-spacing: -0.02em;
+}
+
+.muted {
+    color: #64748b;
+    margin-bottom: 24px;
+    display: block;
+}
+
+.sectionTitle {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 28px 0 10px;
+}
+
+.paragraph {
+    margin: 0 0 12px;
+}
+
+.list {
+    padding-left: 20px;
+}
+
+.list li {
+    margin: 6px 0;
+}
+
+@media (prefers-color-scheme: dark) {
+    .card {
+        background: #0b1220;
+        color: #e5e7eb;
+        border-color: #1f2937;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, .35);
+    }
+
+    .title {
+        color: #f3f4f6;
+    }
+
+    .muted {
+        color: #9ca3af;
+    }
+}
+
+@media (min-width: 768px) {
+    .card {
+        padding: 28px;
+        border-radius: 20px;
+    }
+}
+

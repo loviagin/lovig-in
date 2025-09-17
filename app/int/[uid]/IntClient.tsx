@@ -6,15 +6,15 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { FaApple, FaGoogle } from 'react-icons/fa6';
 import styles from './IntClient.module.css';
 
-const LOGIN_ERRS = new Set(['invalid_email','missing_fields','invalid_credentials','login_failed']);
-const SIGNUP_ERRS = new Set(['invalid_email','missing_fields','weak_password','email_exists','signup_failed']);
+const LOGIN_ERRS = new Set(['invalid_email', 'missing_fields', 'invalid_credentials', 'login_failed']);
+const SIGNUP_ERRS = new Set(['invalid_email', 'missing_fields', 'weak_password', 'email_exists', 'signup_failed']);
 
 type IntDetails = {
     uid: string;
     prompt: { name: 'login' | 'signup' | 'consent' | string };
     params: Record<string, string>;
     session?: { accountId?: string } | null;
-    clientName?: string;  // ← новое поле
+    clientName?: string;
 };
 
 export default function IntClient({ uid }: { uid: string }) {
@@ -86,12 +86,9 @@ export default function IntClient({ uid }: { uid: string }) {
         return () => { abort = true; };
     }, [uid, router, screenParam, errParam]);
 
-    // styles moved to CSS module
-
     const switchView = (next: 'chooser' | 'login' | 'signup') => {
         setBusy(true);
         setView(next);
-        // brief lock to avoid rapid double-clicks and jank during small transitions
         setTimeout(() => setBusy(false), 250);
     };
 
@@ -153,6 +150,11 @@ export default function IntClient({ uid }: { uid: string }) {
                 <form method="post" action={`/interaction/${uid}/confirm`}>
                     <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>Continue</button>
                 </form>
+                <div className={styles.legal}>
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy</a>
+                    {' · '}
+                    <a href="/terms" target="_blank" rel="noopener noreferrer">Terms</a>
+                </div>
             </main>
         );
     }
@@ -164,9 +166,19 @@ export default function IntClient({ uid }: { uid: string }) {
                 <Header />
                 <h1 className={styles.title}>Continue {appName ? `to ${appName}` : ''}</h1>
                 <div className={styles.providersGrid}>
-                    <button type="button" className={`${styles.btn} ${styles.providerBtn} ${styles.btnWithIcon}`} disabled={busy}>
+                    <button
+                        type="button"
+                        className={`${styles.btn} ${styles.providerBtn} ${styles.btnWithIcon}`}
+                        onClick={() => {
+                            if (busy) return;
+                            setBusy(true);
+                            location.href = `/interaction/${uid}/google/start`;
+                        }}
+                        disabled={busy}
+                        aria-label="Continue with Google"
+                    >
                         <span className={styles.btnInner}>
-                            <FaGoogle className={styles.icon} aria-hidden="true" />
+                            {busy ? <span className={styles.spinner} aria-hidden="true" /> : <FaGoogle className={styles.icon} aria-hidden="true" />}
                             <span className={styles.btnLabel}>Continue with Google</span>
                         </span>
                     </button>
@@ -187,6 +199,11 @@ export default function IntClient({ uid }: { uid: string }) {
                         {busy ? <span className={styles.spinner} aria-hidden="true" /> : null}
                         <span>Sign in with Email</span>
                     </button>
+                </div>
+                <div className={styles.legal}>
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy</a>
+                    {' · '}
+                    <a href="/terms" target="_blank" rel="noopener noreferrer">Terms</a>
                 </div>
             </main>
         );
@@ -239,6 +256,11 @@ export default function IntClient({ uid }: { uid: string }) {
                         <span>Create account instead</span>
                     </button>
                 </section>
+                <div className={styles.legal}>
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy</a>
+                    {' · '}
+                    <a href="/terms" target="_blank" rel="noopener noreferrer">Terms</a>
+                </div>
             </main>
         );
     }
@@ -295,6 +317,11 @@ export default function IntClient({ uid }: { uid: string }) {
                     <span>I already have an account</span>
                 </button>
             </section>
+            <div className={styles.legal}>
+                <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy</a>
+                {' · '}
+                <a href="/terms" target="_blank" rel="noopener noreferrer">Terms</a>
+            </div>
         </main>
     );
 }

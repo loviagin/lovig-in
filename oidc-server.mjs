@@ -13,6 +13,7 @@ import {
     postSignup,
     postConfirm,
 } from './server/routes/interactions.mjs';
+import { googleStart, googleCallback } from './server/routes/google.mjs';
 
 async function main() {
     const pool = new Pool({ connectionString: DATABASE_URL });
@@ -79,6 +80,12 @@ state=${query.state}
         }
         if (req.method === 'POST' && (m = pathname.match(/^\/interaction\/([^/]+)\/confirm$/))) {
             return await postConfirm(provider, req, res);
+        }
+        if (req.method === 'GET' && (m = pathname.match(/^\/interaction\/([^/]+)\/google\/start$/))) {
+            return await googleStart(provider, req, res, m[1]);
+        }
+        if (req.method === 'GET' && pathname === '/interaction/google/cb') {
+            return await googleCallback(provider, pool, req, res, query);
         }
 
         // всё остальное — в provider

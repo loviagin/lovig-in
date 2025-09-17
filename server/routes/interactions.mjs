@@ -106,8 +106,9 @@ export async function postSignup(provider, pool, req, res, uid) {
         const { default: argon2 } = await import('argon2');
         const password_hash = await argon2.hash(password);
         const ins = await pool.query(
-            'INSERT INTO users (email, password_hash, name, email_verified) VALUES ($1,$2,$3,$4) RETURNING id',
-            [email, password_hash, name || null, false]
+            `INSERT INTO users (email, password_hash, name, email_verified, providers)
+             VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+            [email, password_hash, name || null, false, ['email']]
         );
         const userId = ins.rows[0].id;
 

@@ -255,6 +255,23 @@
     height: 8px
 }
 
+.legal {
+    margin-top: 12px;
+    color: #64748b;
+    text-align: center;
+    font-size: 12px
+}
+
+.legal a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px
+}
+
+.legal a:hover {
+    color: #0f172a
+}
+
 .alert {
     padding: 10px 12px;
     margin-bottom: 16px;
@@ -267,6 +284,8 @@
 
 @media (prefers-color-scheme: dark) {
     .alert { border-color: #7f1d1d; background: #1c1212; color: #fca5a5 }
+    .legal { color: #9ca3af }
+    .legal a:hover { color: #e5e7eb }
 }
 
 @media (min-width: 768px) {
