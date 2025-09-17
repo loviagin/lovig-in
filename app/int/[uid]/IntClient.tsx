@@ -159,7 +159,7 @@ export default function IntClient({ uid }: { uid: string }) {
         );
     }
 
-    // CHOOSER — список соцсетей (пока заглушки) + email-кнопки
+    // CHOOSER — список соцсетей + email-кнопки
     if (view === 'chooser') {
         return (
             <main className={styles.shell}>
@@ -263,35 +263,6 @@ export default function IntClient({ uid }: { uid: string }) {
                         </button>
                     </form>
 
-                    <div className={styles.divider}><span>or</span></div>
-                    <div className={styles.providersGrid}>
-                        <button
-                            type="button"
-                            className={`${styles.btn} ${styles.providerBtn} ${styles.btnWithIcon}`}
-                            onClick={() => {
-                                if (busy) return;
-                                setBusy(true);
-                                location.href = `/interaction/${uid}/google/start`;
-                            }}
-                            disabled={busy}
-                            aria-label="Continue with Google"
-                        >
-                            {busy ? <span className={styles.spinner} aria-hidden="true" /> : <FaGoogle className={styles.icon} aria-hidden="true" />}
-                        </button>
-                        <button
-                            type="button"
-                            className={`${styles.btn} ${styles.providerBtn} ${styles.btnWithIcon}`}
-                            onClick={() => {
-                                if (busy) return;
-                                setBusy(true);
-                                location.href = `/interaction/${uid}/apple/start`;
-                            }}
-                            disabled={busy}
-                            aria-label="Continue with Apple"
-                        >
-                            {busy ? <span className={styles.spinner} aria-hidden="true" /> : <FaApple className={styles.icon} aria-hidden="true" />}
-                        </button>
-                    </div>
                     <div className={styles.helper} />
                     <button
                         type="button"
@@ -303,6 +274,34 @@ export default function IntClient({ uid }: { uid: string }) {
                         <span>Create account instead</span>
                     </button>
                 </section>
+                <div className={styles.socialIcons}>
+                    <button
+                        type="button"
+                        className={styles.socialIcon}
+                        onClick={() => {
+                            if (busy) return;
+                            setBusy(true);
+                            location.href = `/interaction/${uid}/google/start`;
+                        }}
+                        disabled={busy}
+                        aria-label="Continue with Google"
+                    >
+                        {busy ? <span className={styles.spinner} aria-hidden="true" /> : <FaGoogle aria-hidden="true" />}
+                    </button>
+                    <button
+                        type="button"
+                        className={styles.socialIcon}
+                        onClick={() => {
+                            if (busy) return;
+                            setBusy(true);
+                            location.href = `/interaction/${uid}/apple/start`;
+                        }}
+                        disabled={busy}
+                        aria-label="Continue with Apple"
+                    >
+                        {busy ? <span className={styles.spinner} aria-hidden="true" /> : <FaApple aria-hidden="true" />}
+                    </button>
+                </div>
                 <div className={styles.legal}>
                     <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy</a>
                     {' · '}
@@ -391,35 +390,6 @@ export default function IntClient({ uid }: { uid: string }) {
                     </button>
                 </form>
 
-                <div className={styles.divider}><span>or</span></div>
-                <div className={styles.providersGrid}>
-                    <button
-                        type="button"
-                        className={`${styles.btn} ${styles.providerBtn} ${styles.btnWithIcon}`}
-                        onClick={() => {
-                            if (busy) return;
-                            setBusy(true);
-                            location.href = `/interaction/${uid}/google/start`;
-                        }}
-                        disabled={busy}
-                        aria-label="Continue with Google"
-                    >
-                        {busy ? <span className={styles.spinner} aria-hidden="true" /> : <FaGoogle className={styles.icon} aria-hidden="true" />}
-                    </button>
-                    <button
-                        type="button"
-                        className={`${styles.btn} ${styles.providerBtn} ${styles.btnWithIcon}`}
-                        onClick={() => {
-                            if (busy) return;
-                            setBusy(true);
-                            location.href = `/interaction/${uid}/apple/start`;
-                        }}
-                        disabled={busy}
-                        aria-label="Continue with Apple"
-                    >
-                        {busy ? <span className={styles.spinner} aria-hidden="true" /> : <FaApple className={styles.icon} aria-hidden="true" />}
-                    </button>
-                </div>
                 <div className={styles.helper} />
                 <button
                     type="button"
@@ -431,6 +401,34 @@ export default function IntClient({ uid }: { uid: string }) {
                     <span>I already have an account</span>
                 </button>
             </section>
+            <div className={styles.socialIcons}>
+                <button
+                    type="button"
+                    className={styles.socialIcon}
+                    onClick={() => {
+                        if (busy) return;
+                        setBusy(true);
+                        location.href = `/interaction/${uid}/google/start`;
+                    }}
+                    disabled={busy}
+                    aria-label="Continue with Google"
+                >
+                    {busy ? <span className={styles.spinner} aria-hidden="true" /> : <FaGoogle aria-hidden="true" />}
+                </button>
+                <button
+                    type="button"
+                    className={styles.socialIcon}
+                    onClick={() => {
+                        if (busy) return;
+                        setBusy(true);
+                        location.href = `/interaction/${uid}/apple/start`;
+                    }}
+                    disabled={busy}
+                    aria-label="Continue with Apple"
+                >
+                    {busy ? <span className={styles.spinner} aria-hidden="true" /> : <FaApple aria-hidden="true" />}
+                </button>
+            </div>
             <div className={styles.legal}>
                 <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy</a>
                 {' · '}
