@@ -47,7 +47,7 @@ function appleAuthUrl(params) {
     const u = new URL(APPLE_AUTHZ);
     u.searchParams.set('response_type', 'code');
     // ВАЖНО: GET, чтобы interaction-cookie приходила на iOS/Safari
-    u.searchParams.set('response_mode', 'query');
+    u.searchParams.set('response_mode', 'form_post');
     u.searchParams.set('client_id', APPLE_CLIENT_ID);
     u.searchParams.set('redirect_uri', APPLE_REDIRECT_URI);
     u.searchParams.set('scope', 'name email');
@@ -103,6 +103,10 @@ export async function appleCallback(provider, pool, req, res, query) {
     const state = String(query.state || '');
 
     if (!state) return redirect303(res, `/int/error?code=invalid_state`);
+
+    // в appleCallback перед interactionDetails
+    const hasIntCookie = /oidc:interaction=/.test(req.headers.cookie || '');
+    console.log('[apple cb] has interaction cookie:', hasIntCookie, req.headers.cookie?.length || 0);
 
     // Проверяем, что интеракция жива (cookie должна прийти на top-level GET)
     try { await provider.interactionDetails(req, res); }
