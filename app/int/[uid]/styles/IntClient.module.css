@@ -301,6 +301,52 @@
     color: #0f172a
 }
 
+/* Social icons */
+.socialIcons {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin: 16px 0 8px;
+}
+
+.socialIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 20px;
+}
+
+.socialIcon:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #0f172a;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.socialIcon:active {
+    transform: translateY(0);
+}
+
+.socialIcon:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.socialIcon:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.35);
+}
+
 .alert {
     padding: 10px 12px;
     margin-bottom: 16px;
@@ -398,5 +444,18 @@
 
     .scopeDesc {
         color: #9ca3af
+    }
+
+    .socialIcon {
+        background: #0f172a;
+        border-color: #1f2937;
+        color: #9ca3af;
+    }
+
+    .socialIcon:hover {
+        background: #111827;
+        border-color: #374151;
+        color: #e5e7eb;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 }
