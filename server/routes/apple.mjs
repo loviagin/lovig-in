@@ -44,16 +44,15 @@ async function buildClientSecret() {
 }
 
 function appleAuthUrl(params) {
-    const u = new URL(APPLE_AUTHZ);
+    const u = new URL('https://appleid.apple.com/auth/authorize');
     u.searchParams.set('response_type', 'code');
-    // ВАЖНО: GET, чтобы interaction-cookie приходила на iOS/Safari
-    u.searchParams.set('response_mode', 'form_post');
+    u.searchParams.set('response_mode', 'form_post');      // важно
     u.searchParams.set('client_id', APPLE_CLIENT_ID);
     u.searchParams.set('redirect_uri', APPLE_REDIRECT_URI);
     u.searchParams.set('scope', 'name email');
     for (const [k, v] of Object.entries(params)) u.searchParams.set(k, String(v));
     return u.toString();
-}
+  }
 
 // GET /interaction/:uid/apple/start
 export async function appleStart(provider, req, res, uid) {

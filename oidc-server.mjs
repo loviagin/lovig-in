@@ -88,10 +88,18 @@ state=${query.state}
         if (req.method === 'POST' && (pathname === '/password/reset' || pathname === '/api/oidc/password/reset')) {
             return await postReset(pool, req, res);
         }
-        if (req.method === 'GET' && (m = pathname.match(/^\/interaction\/([^/]+)\/apple\/start$/))) {
-            return await appleStart(provider, req, res, m[1]);
+        // Apple start
+        if (req.method === 'GET') {
+            const m = pathname.match(/^\/interaction\/([^/]+)\/apple\/start$/);
+            if (m) { return await appleStart(provider, req, res, m[1]); }
         }
-        if ((req.method === 'POST' || req.method === 'GET') && pathname === '/interaction/apple/cb') {
+
+        // Apple callback — примем и /interaction/apple/cb, и /api/oidc/interaction/apple/cb
+        if (req.method === 'GET' && (
+            pathname === '/interaction/apple/cb' ||
+            pathname === '/api/oidc/interaction/apple/cb'
+        )) {
+            console.log('[apple cb] HIT', pathname, query);  // <-- временно для дебага
             return await appleCallback(provider, pool, req, res, query);
         }
 
