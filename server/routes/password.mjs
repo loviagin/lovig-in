@@ -39,10 +39,10 @@ export async function getInspect(pool, req, res, query) {
         const tokenHash = crypto.createHash('sha256').update(token).digest();
         const q = await pool.query(
             `SELECT u.email
-         FROM password_reset_tokens prt
-         JOIN users u ON u.id = prt.user_id
-        WHERE prt.token_hash = $1 AND prt.used_at IS NULL AND prt.expires_at > now()
-        LIMIT 1`,
+           FROM password_reset_tokens prt
+           JOIN users u ON u.id = prt.user_id
+          WHERE prt.token_hash = $1 AND prt.used_at IS NULL AND prt.expires_at > now()
+          LIMIT 1`,
             [tokenHash]
         );
         if (!q.rows[0]) {
@@ -53,7 +53,6 @@ export async function getInspect(pool, req, res, query) {
         res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
         res.end(JSON.stringify({ email: q.rows[0].email }));
     } catch (e) {
-        log.error('[password/inspect] failed', e);
         res.writeHead(400, { 'content-type': 'application/json' });
         res.end(JSON.stringify({ error: 'inspect_failed' }));
     }
