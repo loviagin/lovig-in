@@ -50,10 +50,6 @@ function appleAuthUrl(params) {
 
 // GET /interaction/:uid/apple/start
 export async function appleStart(provider, req, res, uid) {
-    try { await provider.interactionDetails(req, res); } catch {
-        return redirect303(res, `/int/error?code=interaction_not_found`);
-    }
-    // state = uid, можно добавить nonce (но нам достаточно state+interaction cookie)
     const url = appleAuthUrl({ state: uid });
     res.writeHead(302, { Location: url });
     res.end();
@@ -166,7 +162,7 @@ export async function appleCallback(provider, pool, req, res, query) {
                      WHERE id = $1`,
                     [userId, appleSub, fullName]
                 );
-                  
+
                 const ins = await pool.query(
                     `INSERT INTO users (email, password_hash, name, email_verified, providers, apple_sub)
                      VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
