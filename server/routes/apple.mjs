@@ -22,6 +22,15 @@ const APPLE_AUTHZ = 'https://appleid.apple.com/auth/authorize';
 const APPLE_TOKEN = 'https://appleid.apple.com/auth/token';
 const APPLE_ISS = 'https://appleid.apple.com';
 
+async function readBody(req) {
+    return await new Promise((resolve, reject) => {
+        let s = '';
+        req.on('data', c => s += c);
+        req.on('end', () => resolve(s));
+        req.on('error', reject);
+    });
+}
+
 // ----- client_secret (JWT), живёт ~20 минут
 async function buildClientSecret() {
     const now = Math.floor(Date.now() / 1000);
@@ -97,84 +106,99 @@ async function verifyIdToken(idToken) {
 }
 
 // GET /interaction/apple/cb?code=...&state=<uid>  (response_mode=query)
-export async function appleCallback(provider, pool, req, res, query) {
-    let code = '', state = '';
-    if (req.method === 'POST') {
-        const raw = await new Promise((r, j) => { let s = ''; req.on('data', c => s += c); req.on('end', () => r(s)); req.on('error', j); });
-        const ct = (req.headers['content-type'] || '').toLowerCase();
-        const body = ct.includes('application/json')
-            ? (raw ? JSON.parse(raw) : {})
-            : Object.fromEntries(new URLSearchParams(raw));
-        code = String(body.code || '');
-        state = String(body.state || '');
-        // user приходит только один раз, можешь вытянуть имя из body.user (JSON)
-    } else {
-        code = String(query.code || '');
-        state = String(query.state || '');
-    }
-
-    if (!state) return redirect303(res, `/int/error?code=invalid_state`);
-    try { await provider.interactionDetails(req, res); }
-    catch { return redirect303(res, `/int/error?code=interaction_expired`); }
-    if (!code) return redirect303(res, `/int/${state}?screen=login&err=login_failed`);
-
+export async function appleCallback(provider, pool, req, res) {
     try {
-        // 1) code -> tokens
+        // 1) достаём code/state
+        let code = '', state = '', userJson = null;
+
+        if (req.method === 'POST') {
+            const raw = await readBody(req);
+            const ct = (req.headers['content-type'] || '').toLowerCase();
+            const body = ct.includes('application/json')
+                ? (raw ? JSON.parse(raw) : {})
+                : Object.fromEntries(new URLSearchParams(raw));
+
+            code = String(body.code || '');
+            state = String(body.state || '');
+            if (body.user) {
+                try { userJson = JSON.parse(String(body.user)); } catch { }
+            }
+        } else { // GET fallback
+            const u = new URL(req.url, `https://${req.headers.host}`);
+            code = String(u.searchParams.get('code') || '');
+            state = String(u.searchParams.get('state') || '');
+        }
+
+        if (!state) {
+            return redirect303(res, `/int/error?code=invalid_state`);
+        }
+
+        // 2) проверим интеракцию (ожидаем куку; для form_post нужен SameSite=None)
+        try { await provider.interactionDetails(req, res); }
+        catch { return redirect303(res, `/int/error?code=interaction_expired`); }
+
+        if (!code) {
+            return redirect303(res, `/int/${encodeURIComponent(state)}?screen=login&err=login_failed`);
+        }
+
+        // 3) обмен кода
         const clientSecret = await buildClientSecret();
         const tokens = await exchangeCode(code, clientSecret);
         if (!tokens.id_token) throw new Error('no id_token from apple');
 
-        // 2) verify id_token
+        // 4) verify id_token
         const claims = await verifyIdToken(tokens.id_token);
         const appleSub = String(claims.sub);
         const email = (claims.email ? String(claims.email) : '').toLowerCase();
         const emailVerified = claims.email_verified === true || claims.email_verified === 'true';
 
-        // 3) find-or-create
+        // опционально имя (придёт только в ПЕРВЫЙ раз через form_post)
+        const firstName = userJson?.name?.firstName?.trim() || '';
+        const lastName = userJson?.name?.lastName?.trim() || '';
+        const fullName = (firstName || lastName) ? `${firstName} ${lastName}`.trim() : null;
+
+        // 5) find-or-create
         let userId;
 
         if (email && emailVerified) {
-            const found = await pool.query(
-                'SELECT id, providers, apple_sub FROM users WHERE LOWER(email)=LOWER($1)',
-                [email]
-            );
+            const found = await pool.query('SELECT id, providers, apple_sub FROM users WHERE LOWER(email)=LOWER($1)', [email]);
             if (found.rows[0]) {
                 userId = found.rows[0].id;
                 await pool.query(
                     `UPDATE users
-             SET providers = ARRAY(SELECT DISTINCT unnest(coalesce(providers,'{}'::text[]) || '{apple}')),
-                 apple_sub = COALESCE(apple_sub, $2)
-           WHERE id = $1`,
-                    [userId, appleSub]
+               SET providers = ARRAY(SELECT DISTINCT unnest(coalesce(providers,'{}'::text[]) || '{apple}')),
+                   apple_sub = COALESCE(apple_sub, $2),
+                   name = COALESCE(name, $3)
+             WHERE id = $1`,
+                    [userId, appleSub, fullName]
                 );
             } else {
                 const ins = await pool.query(
                     `INSERT INTO users (email, password_hash, name, email_verified, providers, apple_sub)
-           VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
-                    [email, null, null, true, ['apple'], appleSub]
+             VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
+                    [email, null, fullName, true, ['apple'], appleSub]
                 );
                 userId = ins.rows[0].id;
             }
         } else {
-            // email отсутствует (частый случай на повторных логинах) — ищем по sub
             const bySub = await pool.query('SELECT id FROM users WHERE apple_sub = $1', [appleSub]);
-            if (bySub.rows[0]) {
-                userId = bySub.rows[0].id;
-                await pool.query(
-                    `UPDATE users
+            if (!bySub.rows[0]) {
+                return redirect303(res, `/int/${encodeURIComponent(state)}?screen=login&err=login_failed`);
+            }
+            userId = bySub.rows[0].id;
+            await pool.query(
+                `UPDATE users
              SET providers = ARRAY(SELECT DISTINCT unnest(coalesce(providers,'{}'::text[]) || '{apple}'))
            WHERE id = $1`,
-                    [userId]
-                );
-            } else {
-                return redirect303(res, `/int/${state}?screen=login&err=login_failed`);
-            }
+                [userId]
+            );
         }
 
-        // 4) finish interaction
+        // 6) завершаем интеракцию
         await provider.interactionFinished(req, res, { login: { accountId: userId } }, { mergeWithLastSubmission: false });
     } catch (e) {
         log.error('[apple callback] failed', e);
-        return redirect303(res, `/int/${state}?screen=login&err=login_failed`);
+        // если state неизвестен — отправим на общий экран ошибки
+        return redirect303(res, `/int/error?code=apple_callback_failed`);
     }
 }

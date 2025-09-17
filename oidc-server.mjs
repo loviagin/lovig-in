@@ -91,15 +91,20 @@ state=${query.state}
         // Apple start
         if (req.method === 'GET') {
             const m = pathname.match(/^\/interaction\/([^/]+)\/apple\/start$/);
-            if (m) { return await appleStart(provider, req, res, m[1]); }
+            if (m) {
+                await appleStart(provider, req, res, m[1]);
+                return;
+            }
         }
+
         // Apple callback
         if ((req.method === 'POST' || req.method === 'GET') && (
             pathname === '/interaction/apple/cb' ||
             pathname === '/api/oidc/interaction/apple/cb'
         )) {
-            console.log('[apple cb] HIT', pathname, query);  // <-- временно для дебага
-            return await appleCallback(provider, pool, req, res, query);
+            console.log('[apple cb] HIT', req.method, pathname);
+            await appleCallback(provider, pool, req, res); // сам разберётся POST/GET
+            return;
         }
 
         // всё остальное — в provider
