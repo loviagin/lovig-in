@@ -1,6 +1,6 @@
 // app/reset/[token]/page.tsx
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import styles from './page.module.css';
 
@@ -9,6 +9,22 @@ export default function ResetPage() {
     const router = useRouter();
     const [busy, setBusy] = useState(false);
     const [err, setErr] = useState<string | null>(null);
+    const [email, setEmail] = useState<string>('');
+
+    useEffect(() => {
+        let abort = false;
+        (async () => {
+            try {
+                const r = await fetch(`/api/oidc/password/inspect?token=${encodeURIComponent(String(token))}`, { cache: 'no-store' });
+                if (!r.ok) throw new Error('invalid_or_expired');
+                const j = await r.json();
+                if (!abort) setEmail(String(j.email || ''));
+            } catch {
+                if (!abort) setErr('The reset link is invalid or expired.');
+            }
+        })();
+        return () => { abort = true; };
+    }, [token]);
 
     return (
         <main className={styles.shell}>
@@ -26,19 +42,25 @@ export default function ResetPage() {
                     const r = await fetch('/api/oidc/password/reset', {
                         method: 'POST',
                         headers: { 'content-type': 'application/json' },
-                        body: JSON.stringify({ token, newPassword: p1 }),
+                        body: JSON.stringify({ token, newPassword: p1, email }),
                     });
-                    
+                    const j = await r.json().catch(() => ({}));
                     if (!r.ok) {
-                        const j = await r.json().catch(() => ({}));
                         setErr(j.error || 'Reset failed');
                         setBusy(false);
                         return;
                     }
-                    alert('Password updated. You can sign in now.');
                     router.replace('/reset/success');
                 }}
             >
+                <input
+                    name="email"
+                    type="email"
+                    value={email}
+                    readOnly
+                    className={styles.input}
+                    aria-label="Account e-mail"
+                />
                 <input name="password" type="password" placeholder="New password (min 6)" required className={styles.input} />
                 <input name="password2" type="password" placeholder="Repeat new password" required className={styles.input} />
                 <button disabled={busy} className={`${styles.btn} ${styles.btnPrimary}`}>
