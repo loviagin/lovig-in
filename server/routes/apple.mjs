@@ -100,17 +100,22 @@ async function verifyIdToken(idToken) {
 // GET /interaction/apple/cb?code=...&state=<uid>  (response_mode=query)
 export async function appleCallback(provider, pool, req, res, query) {
     const code = String(query.code || '');
-    const state = String(query.state || '');
+    let state = String(query.state || '');
 
+    // 1) Всегда сначала поднимем интеракцию (кука должна быть на GET)
+    let details;
+    try {
+        details = await provider.interactionDetails(req, res);
+    } catch {
+        return redirect303(res, `/int/error?code=interaction_expired`);
+    }
+
+    // 2) Если Apple не прислал state — используем uid из интеракции
+    if (!state) state = details?.uid || '';
     if (!state) return redirect303(res, `/int/error?code=invalid_state`);
 
-    // в appleCallback перед interactionDetails
-    const hasIntCookie = /oidc:interaction=/.test(req.headers.cookie || '');
-    console.log('[apple cb] has interaction cookie:', hasIntCookie, req.headers.cookie?.length || 0);
-
-    // Проверяем, что интеракция жива (cookie должна прийти на top-level GET)
-    try { await provider.interactionDetails(req, res); }
-    catch { return redirect303(res, `/int/error?code=interaction_expired`); }
+    // (временно полезно логировать входящие параметры)
+    try { log.info('[apple cb] query', query); } catch { }
 
     if (!code) return redirect303(res, `/int/${state}?screen=login&err=login_failed`);
 
