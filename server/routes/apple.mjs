@@ -52,7 +52,7 @@ function appleAuthUrl(params) {
     u.searchParams.set('scope', 'name email');
     for (const [k, v] of Object.entries(params)) u.searchParams.set(k, String(v));
     return u.toString();
-  }
+}
 
 // GET /interaction/:uid/apple/start
 export async function appleStart(provider, req, res, uid) {
@@ -98,24 +98,24 @@ async function verifyIdToken(idToken) {
 
 // GET /interaction/apple/cb?code=...&state=<uid>  (response_mode=query)
 export async function appleCallback(provider, pool, req, res, query) {
-    const code = String(query.code || '');
-    let state = String(query.state || '');
-
-    // 1) Всегда сначала поднимем интеракцию (кука должна быть на GET)
-    let details;
-    try {
-        details = await provider.interactionDetails(req, res);
-    } catch {
-        return redirect303(res, `/int/error?code=interaction_expired`);
+    let code = '', state = '';
+    if (req.method === 'POST') {
+        const raw = await new Promise((r, j) => { let s = ''; req.on('data', c => s += c); req.on('end', () => r(s)); req.on('error', j); });
+        const ct = (req.headers['content-type'] || '').toLowerCase();
+        const body = ct.includes('application/json')
+            ? (raw ? JSON.parse(raw) : {})
+            : Object.fromEntries(new URLSearchParams(raw));
+        code = String(body.code || '');
+        state = String(body.state || '');
+        // user приходит только один раз, можешь вытянуть имя из body.user (JSON)
+    } else {
+        code = String(query.code || '');
+        state = String(query.state || '');
     }
 
-    // 2) Если Apple не прислал state — используем uid из интеракции
-    if (!state) state = details?.uid || '';
     if (!state) return redirect303(res, `/int/error?code=invalid_state`);
-
-    // (временно полезно логировать входящие параметры)
-    try { log.info('[apple cb] query', query); } catch { }
-
+    try { await provider.interactionDetails(req, res); }
+    catch { return redirect303(res, `/int/error?code=interaction_expired`); }
     if (!code) return redirect303(res, `/int/${state}?screen=login&err=login_failed`);
 
     try {
