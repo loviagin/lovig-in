@@ -17,7 +17,7 @@ export default function buildConfiguration({ pool }) {
         cookies: {
             names: { interaction: 'oidc:interaction', session: 'oidc:session' },
             keys: [COOKIE_SECRET, RESERVE_ROTATION_KEY],
-            short: { secure: true, sameSite: 'lax', domain: new URL(ISSUER).host.split(':')[0], path: '/' },
+            short: { secure: true, sameSite: 'none', domain: new URL(ISSUER).host.split(':')[0], path: '/' },
             long: { secure: true, sameSite: 'lax', domain: new URL(ISSUER).host.split(':')[0], path: '/' },
         },
         interactions: {
