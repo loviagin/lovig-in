@@ -194,7 +194,7 @@ export default function IntClient({ uid }: { uid: string }) {
                         aria-label="Continue with Apple"
                     >
                         <span className={styles.btnInner}>
-                            <FaApple className={styles.icon} aria-hidden="true" />
+                            {busy ? <span className={styles.spinner} aria-hidden="true" /> : <FaApple className={styles.icon} aria-hidden="true" />}
                             <span className={styles.btnLabel}>Continue with Apple</span>
                         </span>
                     </button>

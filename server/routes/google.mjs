@@ -4,9 +4,13 @@ import { OAuth2Client } from 'google-auth-library';
 import { redirect303 } from '../utils.mjs';
 import { log } from '../logger.mjs';
 
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || 'https://auth.lovig.in/interaction/google/cb';
+
 let oauth = null;
+
 function ensureGoogleConfigured() {
-    const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI } = process.env;
     if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REDIRECT_URI) return false;
     if (!oauth) {
         oauth = new OAuth2Client({
@@ -32,7 +36,9 @@ function googleAuthURL(params) {
 
 // GET /interaction/:uid/google/start
 export async function googleStart(provider, req, res, uid) {
-    if (!ensureGoogleConfigured()) return redirect303(res, `/int/${uid}?screen=login&err=login_failed`);
+    if (!ensureGoogleConfigured()) {
+        return redirect303(res, `/int/${uid}?screen=login&err=login_failed`);
+    }
     try { await provider.interactionDetails(req, res); } catch {
         return redirect303(res, `/int/error?code=interaction_not_found`);
     }
@@ -43,7 +49,9 @@ export async function googleStart(provider, req, res, uid) {
 
 // GET /interaction/google/cb?code=...&state=<uid>
 export async function googleCallback(provider, pool, req, res, query) {
-    if (!ensureGoogleConfigured()) return redirect303(res, `/int/error?code=oauth_not_configured`);
+    if (!ensureGoogleConfigured()) {
+        return redirect303(res, `/int/error?code=oauth_not_configured`);
+    }
     const uid = String(query.state || '');
     if (!uid) return redirect303(res, `/int/error?code=invalid_state`);
 
