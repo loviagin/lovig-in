@@ -1,4 +1,5 @@
 // server/routes/google.mjs
+import 'dotenv/config';
 import { OAuth2Client } from 'google-auth-library';
 import { redirect303 } from '../utils.mjs';
 import { log } from '../logger.mjs';
