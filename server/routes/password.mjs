@@ -34,12 +34,14 @@ function genericOk(res) {
 // POST /password/forgot   { email }
 export async function postForgot(pool, req, res) {
     try {
-        log.info('[password/forgot] hit', { ip: req.socket.remoteAddress, ua: req.headers['user-agent'] });
-
+        log.info('[password/forgot] hit');
         const raw = await new Promise((r, j) => {
             let s = ''; req.on('data', c => s += c); req.on('end', () => r(s)); req.on('error', j);
         });
-        const body = raw ? JSON.parse(raw) : {};
+        const ct = (req.headers['content-type'] || '').toLowerCase();
+        const body = ct.includes('application/json')
+            ? (raw ? JSON.parse(raw) : {})
+            : Object.fromEntries(new URLSearchParams(raw));
         const email = String(body.email || '').trim().toLowerCase();
 
         // всегда отвечаем 200, даже если email пуст/нет в базе (чтобы не палить наличие)
@@ -109,9 +111,12 @@ export async function postReset(pool, req, res) {
         const raw = await new Promise((r, j) => {
             let s = ''; req.on('data', c => s += c); req.on('end', () => r(s)); req.on('error', j);
         });
-        const body = raw ? JSON.parse(raw) : {};
-        const token = String(body.token || '');
-        const newPassword = String(body.newPassword || '');
+        const ct = (req.headers['content-type'] || '').toLowerCase();
+        const body = ct.includes('application/json')
+            ? (raw ? JSON.parse(raw) : {})
+            : Object.fromEntries(new URLSearchParams(raw));
+        const token = String(body.token || body.t || '');
+        const newPassword = String(body.newPassword || body.password || '');
 
         if (!token || newPassword.length < 6) {
             res.writeHead(400, { 'content-type': 'application/json' });

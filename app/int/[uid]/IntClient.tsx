@@ -286,11 +286,11 @@ export default function IntClient({ uid }: { uid: string }) {
                             const email = new FormData(e.currentTarget).get('email') as string;
                             setBusy(true);
                             try {
-                                await fetch('/password/forgot', {
+                                fetch('/api/oidc/password/forgot', {
                                     method: 'POST',
                                     headers: { 'content-type': 'application/json' },
-                                    body: JSON.stringify({ email }),
-                                });
+                                    body: JSON.stringify({ email })
+                                })
                                 alert('If this email exists, we\'ll send reset link.');
                                 switchView('login');
                             } finally { setBusy(false); }
