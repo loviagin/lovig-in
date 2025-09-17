@@ -108,6 +108,9 @@ async function verifyIdToken(idToken) {
 // GET /interaction/apple/cb?code=...&state=<uid>  (response_mode=query)
 export async function appleCallback(provider, pool, req, res) {
     try {
+        console.log('[apple cb] method=%s cookie=%s ct=%s',
+            req.method, req.headers.cookie || '-', req.headers['content-type'] || '-');
+            
         // 1) достаём code/state
         let code = '', state = '', userJson = null;
 
