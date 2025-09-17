@@ -57,7 +57,7 @@ state=${query.state}
         // interactions
         let m;
         if (req.method === 'GET' && (m = pathname.match(/^\/interaction\/([^/]+)$/))) {
-            return await getInteractionLanding(provider, req, res, m[1]);
+            return await getInteractionLanding(provider, req, res, m[1], pool); // ← pool добавили
         }
         if (req.method === 'GET' && (m = pathname.match(/^\/interaction\/([^/]+)\/details$/))) {
             return await getInteractionDetails(provider, req, res);
@@ -69,7 +69,7 @@ state=${query.state}
             return await postSignup(provider, pool, req, res, m[1]);
         }
         if (req.method === 'POST' && (m = pathname.match(/^\/interaction\/([^/]+)\/confirm$/))) {
-            return await postConfirm(provider, req, res);
+            return await postConfirm(provider, req, res, pool); // ← pool добавили
         }
         if (req.method === 'GET' && (m = pathname.match(/^\/interaction\/([^/]+)\/google\/start$/))) {
             return await googleStart(provider, req, res, m[1]);

@@ -1,10 +1,57 @@
 import { readBody, redirect303, safeClientName } from '../utils.mjs';
 import { log } from '../logger.mjs';
 
-// GET /interaction/:uid  -> редирект на Next
-export async function getInteractionLanding(provider, req, res, uid) {
+// helper: добавить client_id в users.apps
+async function addApp(pool, userId, clientId) {
+    await pool.query(
+        `UPDATE users
+         SET apps = ARRAY(SELECT DISTINCT unnest(coalesce(apps,'{}'::text[]) || $2::text[]))
+       WHERE id = $1`,
+        [userId, [clientId]]
+    );
+}
+
+// GET /interaction/:uid  -> (A) auto-consent если уже авторизован, иначе редирект на Next
+export async function getInteractionLanding(provider, req, res, uid, pool) {
     try {
         const details = await provider.interactionDetails(req, res);
+        const { prompt, session, params, grantId } = details;
+        const accountId = session?.accountId;
+        const clientId = params?.client_id || '';
+
+        // если нужен consent и пользователь уже авторизовывался в этом клиенте — авто-выдаём consent
+        if (prompt?.name === 'consent' && accountId && clientId) {
+            // проверим users.apps
+            const u = await pool.query('SELECT apps FROM users WHERE id = $1', [accountId]);
+            const apps = (u.rows[0]?.apps || []);
+            const alreadyAuthorized = apps.includes(clientId);
+
+            if (alreadyAuthorized) {
+                // выдаём/расширяем грант на запрошенные scope
+                let grant;
+                if (grantId) {
+                    grant = await provider.Grant.find(grantId);
+                } else {
+                    grant = new provider.Grant({ accountId, clientId });
+                }
+                const scope = typeof params.scope === 'string' ? params.scope : '';
+                if (scope) grant.addOIDCScope(scope);
+                const savedGrantId = await grant.save();
+
+                // запишем клиента в users.apps (на всякий случай, если вдруг его ещё не было)
+                await addApp(pool, accountId, clientId);
+
+                // завершаем интеракцию — пользователь улетит на redirect_uri без показа экрана consent
+                await provider.interactionFinished(
+                    req, res,
+                    { consent: { grantId: savedGrantId } },
+                    { mergeWithLastSubmission: true }
+                );
+                return; // важно: не продолжать редирект на /int/...
+            }
+        }
+
+        // дефолт: ведём на /int/[uid] (и добавляем ?screen=signup при необходимости)
         const wantsSignup = details.params?.screen === 'signup';
         const extra = wantsSignup ? '?screen=signup' : '';
         res.writeHead(302, { Location: `/int/${details.uid}${extra}` });
@@ -120,8 +167,8 @@ export async function postSignup(provider, pool, req, res, uid) {
     }
 }
 
-// POST /interaction/:uid/confirm
-export async function postConfirm(provider, req, res) {
+// POST /interaction/:uid/confirm — ручной consent: после сохранения гранта записываем client_id в users.apps
+export async function postConfirm(provider, req, res, pool) {
     try {
         const details = await provider.interactionDetails(req, res);
         const { params, session } = details;
@@ -136,7 +183,15 @@ export async function postConfirm(provider, req, res) {
             grant.addOIDCScope(params.scope);
         }
         const grantId = await grant.save();
-        await provider.interactionFinished(req, res, { consent: { grantId } }, { mergeWithLastSubmission: true });
+
+        // ✨ записываем клиент в users.apps
+        if (session?.accountId && params?.client_id) {
+            await addApp(pool, session.accountId, params.client_id);
+        }
+
+        await provider.interactionFinished(
+            req, res, { consent: { grantId } }, { mergeWithLastSubmission: true }
+        );
     } catch (e) {
         return redirect303(res, `/int/error?code=consent_failed&message=${encodeURIComponent(String(e?.message || e))}`);
     }
