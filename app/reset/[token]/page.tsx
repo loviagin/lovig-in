@@ -23,11 +23,12 @@ export default function ResetPage() {
                     if (p1.length < 6) { setErr('Password too short'); setBusy(false); return; }
                     if (p1 !== p2) { setErr('Passwords do not match'); setBusy(false); return; }
 
-                    const r = await fetch('/password/reset', {
+                    const r = await fetch('/api/oidc/password/reset', {
                         method: 'POST',
                         headers: { 'content-type': 'application/json' },
                         body: JSON.stringify({ token, newPassword: p1 }),
                     });
+                    
                     if (!r.ok) {
                         const j = await r.json().catch(() => ({}));
                         setErr(j.error || 'Reset failed');
@@ -35,7 +36,7 @@ export default function ResetPage() {
                         return;
                     }
                     alert('Password updated. You can sign in now.');
-                    router.push('/api/oidc/auth'); 
+                    router.push('/api/oidc/auth');
                 }}
             >
                 <input name="password" type="password" placeholder="New password (min 6)" required className={styles.input} />
