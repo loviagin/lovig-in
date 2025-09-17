@@ -78,10 +78,10 @@ state=${query.state}
         if (req.method === 'GET' && pathname === '/interaction/google/cb') {
             return await googleCallback(provider, pool, req, res, query);
         }
-        if (req.method === 'POST' && pathname === '/password/forgot') {
+        if (req.method === 'POST' && (pathname === '/password/forgot' || pathname === '/api/oidc/password/forgot')) {
             return await postForgot(pool, req, res);
         }
-        if (req.method === 'POST' && pathname === '/password/reset') {
+        if (req.method === 'POST' && (pathname === '/password/reset' || pathname === '/api/oidc/password/reset')) {
             return await postReset(pool, req, res);
         }
 

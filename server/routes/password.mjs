@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import { log } from '../logger.mjs';
 
 const TTL_MIN = parseInt(process.env.RESET_TOKEN_TTL_MIN || '30', 10);
-const PUBLIC_ORIGIN = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3300';
+const PUBLIC_ORIGIN = process.env.PUBLIC_ORIGIN || 'http://localhost:3300';
 
 // универсальная отправка
 async function sendEmail({ to, subject, html }) {
@@ -34,6 +34,8 @@ function genericOk(res) {
 // POST /password/forgot   { email }
 export async function postForgot(pool, req, res) {
     try {
+        log.info('[password/forgot] hit', { ip: req.socket.remoteAddress, ua: req.headers['user-agent'] });
+
         const raw = await new Promise((r, j) => {
             let s = ''; req.on('data', c => s += c); req.on('end', () => r(s)); req.on('error', j);
         });
@@ -87,7 +89,12 @@ export async function postForgot(pool, req, res) {
       </div>
     `;
 
-        await sendEmail({ to: email, subject: 'Reset your LOVIGIN password', html });
+        try {
+            await sendEmail({ to: email, subject: 'Reset your LOVIGIN password', html });
+            log.info('[password/forgot] email queued', { to: email, resetUrl });
+        } catch (e) {
+            log.error('[password/forgot] email send failed', e);
+        }
 
         return genericOk(res);
     } catch (e) {
