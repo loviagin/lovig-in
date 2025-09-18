@@ -55,7 +55,8 @@ async function buildClientSecret() {
 function appleAuthUrl(params) {
     const u = new URL('https://appleid.apple.com/auth/authorize');
     u.searchParams.set('response_type', 'code');
-    u.searchParams.set('response_mode', 'form_post');      // важно
+    u.searchParams.set('response_mode', 'form_post'); 
+    console.log('[apple start] uid=%s ua=%s -> %s', uid, ua, url);   
     u.searchParams.set('client_id', APPLE_CLIENT_ID);
     u.searchParams.set('redirect_uri', APPLE_REDIRECT_URI);
     u.searchParams.set('scope', 'name email');
@@ -110,7 +111,7 @@ export async function appleCallback(provider, pool, req, res) {
     try {
         console.log('[apple cb] method=%s cookie=%s ct=%s',
             req.method, req.headers.cookie || '-', req.headers['content-type'] || '-');
-            
+
         // 1) достаём code/state
         let code = '', state = '', userJson = null;
 
