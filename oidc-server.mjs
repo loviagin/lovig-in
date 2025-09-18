@@ -107,12 +107,9 @@ state=${query.state}
         }
 
         // Apple callback
-        if ((req.method === 'POST' || req.method === 'GET') && (
-            pathname === '/interaction/apple/cb' ||
-            pathname === '/api/oidc/interaction/apple/cb'
-        )) {
-            console.log('[apple cb] HIT', req.method, pathname);
-            await appleCallback(provider, pool, req, res); // сам разберётся POST/GET
+        iif((req.method === 'POST' || req.method === 'GET') &&
+            (pathname === '/interaction/apple/cb' || pathname === '/api/oidc/interaction/apple/cb')) {
+            await appleCallback(provider, pool, req, res);
             return;
         }
 

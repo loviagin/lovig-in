@@ -22,6 +22,14 @@ const APPLE_AUTHZ = 'https://appleid.apple.com/auth/authorize';
 const APPLE_TOKEN = 'https://appleid.apple.com/auth/token';
 const APPLE_ISS = 'https://appleid.apple.com';
 
+function hasRetryFlag(req) {
+    try {
+        if (req.method === 'POST') return false; // флаг придёт на GET/старте
+        const u = new URL(req.url, `https://${req.headers.host}`);
+        return u.searchParams.get('r') === '1';
+    } catch { return false; }
+}
+
 async function readBody(req) {
     return await new Promise((resolve, reject) => {
         let s = '';
@@ -55,7 +63,7 @@ async function buildClientSecret() {
 function appleAuthUrl(params) {
     const u = new URL('https://appleid.apple.com/auth/authorize');
     u.searchParams.set('response_type', 'code');
-    u.searchParams.set('response_mode', 'form_post'); 
+    u.searchParams.set('response_mode', 'form_post');
     u.searchParams.set('client_id', APPLE_CLIENT_ID);
     u.searchParams.set('redirect_uri', APPLE_REDIRECT_URI);
     u.searchParams.set('scope', 'name email');
@@ -139,9 +147,18 @@ export async function appleCallback(provider, pool, req, res) {
             return redirect303(res, `/int/error?code=invalid_state`);
         }
 
-        // 2) проверим интеракцию (ожидаем куку; для form_post нужен SameSite=None)
-        try { await provider.interactionDetails(req, res); }
-        catch { return redirect303(res, `/int/error?code=interaction_expired`); }
+        try {
+            await provider.interactionDetails(req, res);
+        } catch (e) {
+            log.warn('[apple cb] interaction not found, will retry once', { state });
+
+            // если ещё НЕ пробовали — один раз повторим старт Apple
+            if (!hasRetryFlag(req)) {
+                return redirect303(res, `/interaction/${encodeURIComponent(state)}/apple/start?r=1`);
+            }
+            // уже пробовали — отдаём ошибку, чтобы не крутиться
+            return redirect303(res, `/int/error?code=interaction_expired`);
+        }
 
         if (!code) {
             return redirect303(res, `/int/${encodeURIComponent(state)}?screen=login&err=login_failed`);
