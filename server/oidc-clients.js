@@ -2,7 +2,7 @@ export default [
     {
         client_id: 'demo-web',
         client_name: 'Demo Web',
-        redirect_uris: ['https://auth.lovig.in'], // в dev
+        redirect_uris: ['https://auth.lovig.in/api/oidc/cb'], // в dev
         post_logout_redirect_uris: ['https://auth.lovig.in'],
         response_types: ['code'],
         grant_types: ['authorization_code', 'refresh_token'],
