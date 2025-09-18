@@ -23,6 +23,15 @@ async function main() {
 
     const provider = new Provider(ISSUER, configuration);
 
+    (async () => {
+        try {
+            const c = await provider.Client.find('demo-web');
+            console.log('[debug client demo-web]', c?.metadata);
+        } catch (e) {
+            console.log('[debug client demo-web] not found', e);
+        }
+    })();
+
     // события
     provider.on('authorization.error', (ctx, err) => {
         log.error('[authorization.error]', err?.message, {
