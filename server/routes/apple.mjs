@@ -56,7 +56,6 @@ function appleAuthUrl(params) {
     const u = new URL('https://appleid.apple.com/auth/authorize');
     u.searchParams.set('response_type', 'code');
     u.searchParams.set('response_mode', 'form_post'); 
-    console.log('[apple start] uid=%s ua=%s -> %s', uid, ua, url);   
     u.searchParams.set('client_id', APPLE_CLIENT_ID);
     u.searchParams.set('redirect_uri', APPLE_REDIRECT_URI);
     u.searchParams.set('scope', 'name email');
@@ -67,7 +66,10 @@ function appleAuthUrl(params) {
 // GET /interaction/:uid/apple/start
 export async function appleStart(provider, req, res, uid) {
     // Не требуем interaction на старте — проверим в колбэке
+    const ua = req.headers['user-agent'] || '';
     const url = appleAuthUrl({ state: uid });
+    console.log('[apple start] uid=%s ua=%s -> %s', uid, ua, url);
+
     res.writeHead(302, { Location: url });
     res.end();
 }
