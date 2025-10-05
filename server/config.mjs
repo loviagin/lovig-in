@@ -15,9 +15,7 @@ export default function buildConfiguration({ pool }) {
             revocation: { enabled: true },
         },
         formats: {
-            AccessToken(ctx, token) {
-                return 'jwt';
-            },
+            AccessToken: 'jwt',
         },
         conformIdTokenClaims: false,
         async extraAccessTokenClaims(ctx, token) {
