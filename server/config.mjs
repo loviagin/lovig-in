@@ -15,32 +15,22 @@ export default function buildConfiguration({ pool }) {
             revocation: { enabled: true },
             resourceIndicators: {
                 enabled: true,
-                // Функция для проверки, разрешен ли данный resource indicator
-                async useGrantedResource(ctx, model) {
-                    // Разрешаем использование нашего resource indicator
-                    console.log('[useGrantedResource] checking:', model.resource);
-                    return model.resource && model.resource.includes('nqstx.online');
-                },
                 // НЕ используем defaultResource - это вызывает циклические редиректы
                 async getResourceServerInfo(ctx, resourceIndicator, client) {
-                    // Логируем для отладки
-                    console.log('[getResourceServerInfo] requested:', resourceIndicator, 'client:', client?.clientId);
+                    // Логируем все параметры для отладки
+                    console.log('[getResourceServerInfo] CALLED! resource:', resourceIndicator, 'client:', client?.clientId, 'ctx.oidc.route:', ctx.oidc?.route);
                     
-                    // Принимаем наш resource indicator и возвращаем JWT конфигурацию
-                    if (resourceIndicator && resourceIndicator.includes('nqstx.online')) {
-                        return {
-                            scope: 'openid profile email offline_access',
-                            audience: resourceIndicator,
-                            accessTokenTTL: 60 * 60,
-                            accessTokenFormat: 'jwt',
-                            jwt: {
-                                sign: { alg: 'ES256' },
-                            },
-                        };
-                    }
-                    // Если resource не подходит - возвращаем undefined (opaque токен)
-                    console.log('[getResourceServerInfo] unknown resource, returning undefined');
-                    return undefined;
+                    // Просто возвращаем JWT конфигурацию для ЛЮБОГО resource
+                    // (для отладки - потом можно добавить проверку)
+                    return {
+                        scope: 'openid profile email offline_access',
+                        audience: resourceIndicator || 'https://la.nqstx.online',
+                        accessTokenTTL: 60 * 60,
+                        accessTokenFormat: 'jwt',
+                        jwt: {
+                            sign: { alg: 'ES256' },
+                        },
+                    };
                 },
             },
         },
