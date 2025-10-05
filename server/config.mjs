@@ -13,25 +13,9 @@ export default function buildConfiguration({ pool }) {
             devInteractions: { enabled: false },
             rpInitiatedLogout: { enabled: true },
             revocation: { enabled: true },
-            resourceIndicators: {
-                enabled: true,
-                getResourceServerInfo: async (ctx, resourceIndicator, client) => {
-                    // Проверяем, что это известный resource
-                    if (resourceIndicator === 'https://la.nqstx.online') {
-                        return {
-                            scope: 'openid profile email offline_access',
-                            audience: resourceIndicator,
-                            accessTokenTTL: 60 * 60, // 1 час
-                            accessTokenFormat: 'jwt',
-                            jwt: {
-                                sign: { alg: 'ES256' },
-                            },
-                        };
-                    }
-                    // Для неизвестных resource - возвращаем undefined (опциональный)
-                    return undefined;
-                },
-            },
+        },
+        formats: {
+            AccessToken: 'jwt',
         },
         cookies: {
             names: { interaction: 'oidc:interaction', session: 'oidc:session' },
@@ -91,6 +75,9 @@ export default function buildConfiguration({ pool }) {
 
             ctx.status = 302;
             ctx.redirect(to);
+        },
+        async audiences(ctx, sub, client) {
+            return ['https://la.nqstx.online'];
         },
         jwks,
     };
