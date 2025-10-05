@@ -15,10 +15,16 @@ export default function buildConfiguration({ pool }) {
             revocation: { enabled: true },
             resourceIndicators: {
                 enabled: true,
+                // Функция для проверки, разрешен ли данный resource indicator
+                async useGrantedResource(ctx, model) {
+                    // Разрешаем использование нашего resource indicator
+                    console.log('[useGrantedResource] checking:', model.resource);
+                    return model.resource && model.resource.includes('nqstx.online');
+                },
                 // НЕ используем defaultResource - это вызывает циклические редиректы
                 async getResourceServerInfo(ctx, resourceIndicator, client) {
                     // Логируем для отладки
-                    console.log('[resourceIndicators] requested:', resourceIndicator, 'client:', client.clientId);
+                    console.log('[getResourceServerInfo] requested:', resourceIndicator, 'client:', client?.clientId);
                     
                     // Принимаем наш resource indicator и возвращаем JWT конфигурацию
                     if (resourceIndicator && resourceIndicator.includes('nqstx.online')) {
@@ -33,7 +39,7 @@ export default function buildConfiguration({ pool }) {
                         };
                     }
                     // Если resource не подходит - возвращаем undefined (opaque токен)
-                    console.log('[resourceIndicators] unknown resource, returning undefined');
+                    console.log('[getResourceServerInfo] unknown resource, returning undefined');
                     return undefined;
                 },
             },
