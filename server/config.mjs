@@ -17,8 +17,11 @@ export default function buildConfiguration({ pool }) {
                 enabled: true,
                 // НЕ используем defaultResource - это вызывает циклические редиректы
                 async getResourceServerInfo(ctx, resourceIndicator, client) {
-                    // Если resource указан - возвращаем JWT конфигурацию
-                    if (resourceIndicator === 'https://la.nqstx.online') {
+                    // Логируем для отладки
+                    console.log('[resourceIndicators] requested:', resourceIndicator, 'client:', client.clientId);
+                    
+                    // Принимаем наш resource indicator и возвращаем JWT конфигурацию
+                    if (resourceIndicator && resourceIndicator.includes('nqstx.online')) {
                         return {
                             scope: 'openid profile email offline_access',
                             audience: resourceIndicator,
@@ -29,7 +32,8 @@ export default function buildConfiguration({ pool }) {
                             },
                         };
                     }
-                    // Если resource не указан - возвращаем undefined (opaque токен)
+                    // Если resource не подходит - возвращаем undefined (opaque токен)
+                    console.log('[resourceIndicators] unknown resource, returning undefined');
                     return undefined;
                 },
             },
