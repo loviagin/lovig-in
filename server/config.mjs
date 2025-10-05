@@ -13,19 +13,27 @@ export default function buildConfiguration({ pool }) {
             devInteractions: { enabled: false },
             rpInitiatedLogout: { enabled: true },
             revocation: { enabled: true },
-        },
-        formats: {
-            AccessToken: async (ctx, token) => 'jwt',
-            ClientCredentials: async (ctx, token) => 'jwt',
+            resourceIndicators: {
+                enabled: true,
+                defaultResource(ctx) {
+                    // Возвращаем дефолтный resource для всех запросов
+                    return 'https://la.nqstx.online';
+                },
+                async getResourceServerInfo(ctx, resourceIndicator, client) {
+                    // Принимаем любой resource indicator и возвращаем JWT
+                    return {
+                        scope: 'openid profile email offline_access',
+                        audience: resourceIndicator,
+                        accessTokenTTL: 60 * 60,
+                        accessTokenFormat: 'jwt',
+                        jwt: {
+                            sign: { alg: 'ES256' },
+                        },
+                    };
+                },
+            },
         },
         conformIdTokenClaims: false,
-        async extraAccessTokenClaims(ctx, token) {
-            // Добавляем claims чтобы токен стал JWT
-            return {
-                aud: token.aud || 'https://la.nqstx.online',
-                scope: token.scope,
-            };
-        },
         cookies: {
             names: { interaction: 'oidc:interaction', session: 'oidc:session' },
             keys: [COOKIE_SECRET, RESERVE_ROTATION_KEY],
@@ -87,9 +95,6 @@ export default function buildConfiguration({ pool }) {
         },
         async issueRefreshToken(ctx, client, code) {
             return client.grantTypeAllowed('refresh_token');
-        },
-        async audiences(ctx, sub, client) {
-            return ['https://la.nqstx.online'];
         },
         jwks,
     };
