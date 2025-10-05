@@ -15,7 +15,6 @@ export default function buildConfiguration({ pool }) {
             revocation: { enabled: true },
             resourceIndicators: {
                 enabled: true,
-                defaultResource: () => 'https://la.nqstx.online',
                 getResourceServerInfo: async (ctx, resourceIndicator, client) => {
                     // Проверяем, что это известный resource
                     if (resourceIndicator === 'https://la.nqstx.online') {
@@ -24,9 +23,13 @@ export default function buildConfiguration({ pool }) {
                             audience: resourceIndicator,
                             accessTokenTTL: 60 * 60, // 1 час
                             accessTokenFormat: 'jwt',
+                            jwt: {
+                                sign: { alg: 'ES256' },
+                            },
                         };
                     }
-                    throw new Error('Invalid resource indicator');
+                    // Для неизвестных resource - возвращаем undefined (опциональный)
+                    return undefined;
                 },
             },
         },
@@ -88,9 +91,6 @@ export default function buildConfiguration({ pool }) {
 
             ctx.status = 302;
             ctx.redirect(to);
-        },
-        async audiences(ctx, sub, client) {
-            return ['https://la.nqstx.online']; // аудитория твоего App API
         },
         jwks,
     };
