@@ -73,6 +73,9 @@ export default function buildConfiguration({ pool }) {
             ctx.status = 302;
             ctx.redirect(to);
         },
+        async audiences(ctx, sub, client) {
+            return ['https://la.nqstx.online']; // аудитория твоего App API
+        },
         jwks,
     };
 }

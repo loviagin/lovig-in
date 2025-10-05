@@ -20,4 +20,15 @@ export default [
         grant_types: ['authorization_code', 'refresh_token'],
         id_token_signed_response_alg: 'ES256',
     },
+    {
+        client_id: 'learnsy-ios',
+        client_name: 'Skillify iOS App',
+        application_type: 'native',
+        redirect_uris: ['com.lovigin.ios.Skillify://oidc'],
+        post_logout_redirect_uris: ['https://auth.lovig.in'],
+        token_endpoint_auth_method: 'none',
+        response_types: ['code'],
+        grant_types: ['authorization_code', 'refresh_token'],
+        id_token_signed_response_alg: 'ES256',
+    },
 ];
