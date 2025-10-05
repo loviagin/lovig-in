@@ -15,9 +15,17 @@ export default function buildConfiguration({ pool }) {
             revocation: { enabled: true },
         },
         formats: {
-            AccessToken: 'jwt',
+            AccessToken(ctx, token) {
+                return 'jwt';
+            },
         },
         conformIdTokenClaims: false,
+        async extraAccessTokenClaims(ctx, token) {
+            // Добавляем claims чтобы токен стал JWT
+            return {
+                aud: token.aud || 'https://la.nqstx.online',
+            };
+        },
         cookies: {
             names: { interaction: 'oidc:interaction', session: 'oidc:session' },
             keys: [COOKIE_SECRET, RESERVE_ROTATION_KEY],
