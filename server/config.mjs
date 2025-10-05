@@ -15,21 +15,22 @@ export default function buildConfiguration({ pool }) {
             revocation: { enabled: true },
             resourceIndicators: {
                 enabled: true,
-                defaultResource(ctx) {
-                    // Возвращаем дефолтный resource для всех запросов
-                    return 'https://la.nqstx.online';
-                },
+                // НЕ используем defaultResource - это вызывает циклические редиректы
                 async getResourceServerInfo(ctx, resourceIndicator, client) {
-                    // Принимаем любой resource indicator и возвращаем JWT
-                    return {
-                        scope: 'openid profile email offline_access',
-                        audience: resourceIndicator,
-                        accessTokenTTL: 60 * 60,
-                        accessTokenFormat: 'jwt',
-                        jwt: {
-                            sign: { alg: 'ES256' },
-                        },
-                    };
+                    // Если resource указан - возвращаем JWT конфигурацию
+                    if (resourceIndicator === 'https://la.nqstx.online') {
+                        return {
+                            scope: 'openid profile email offline_access',
+                            audience: resourceIndicator,
+                            accessTokenTTL: 60 * 60,
+                            accessTokenFormat: 'jwt',
+                            jwt: {
+                                sign: { alg: 'ES256' },
+                            },
+                        };
+                    }
+                    // Если resource не указан - возвращаем undefined (opaque токен)
+                    return undefined;
                 },
             },
         },
