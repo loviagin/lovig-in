@@ -15,13 +15,15 @@ export default function buildConfiguration({ pool }) {
             revocation: { enabled: true },
         },
         formats: {
-            AccessToken: 'jwt',
+            AccessToken: async (ctx, token) => 'jwt',
+            ClientCredentials: async (ctx, token) => 'jwt',
         },
         conformIdTokenClaims: false,
         async extraAccessTokenClaims(ctx, token) {
             // Добавляем claims чтобы токен стал JWT
             return {
                 aud: token.aud || 'https://la.nqstx.online',
+                scope: token.scope,
             };
         },
         cookies: {
