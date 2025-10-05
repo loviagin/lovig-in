@@ -13,6 +13,22 @@ export default function buildConfiguration({ pool }) {
             devInteractions: { enabled: false },
             rpInitiatedLogout: { enabled: true },
             revocation: { enabled: true },
+            resourceIndicators: {
+                enabled: true,
+                defaultResource: () => 'https://la.nqstx.online',
+                getResourceServerInfo: async (ctx, resourceIndicator, client) => {
+                    // Проверяем, что это известный resource
+                    if (resourceIndicator === 'https://la.nqstx.online') {
+                        return {
+                            scope: 'openid profile email offline_access',
+                            audience: resourceIndicator,
+                            accessTokenTTL: 60 * 60, // 1 час
+                            accessTokenFormat: 'jwt',
+                        };
+                    }
+                    throw new Error('Invalid resource indicator');
+                },
+            },
         },
         cookies: {
             names: { interaction: 'oidc:interaction', session: 'oidc:session' },
