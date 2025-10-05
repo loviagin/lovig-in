@@ -15,9 +15,13 @@ export default function buildConfiguration({ pool }) {
             revocation: { enabled: true },
             // Отключаем resourceIndicators - они вызывают проблемы
         },
-        // Явно указываем JWT формат для access токенов
+        // Явно указываем JWT формат для access токенов  
         formats: {
-            AccessToken: 'jwt',
+            AccessToken(ctx, token) {
+                console.log('[formats.AccessToken] called for token jti:', token.jti);
+                // Возвращаем 'jwt' вместо 'opaque' (дефолт)
+                return 'jwt';
+            },
         },
         conformIdTokenClaims: false,
         // Добавляем claims чтобы токен стал JWT
