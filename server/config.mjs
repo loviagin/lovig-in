@@ -13,28 +13,21 @@ export default function buildConfiguration({ pool }) {
             devInteractions: { enabled: false },
             rpInitiatedLogout: { enabled: true },
             revocation: { enabled: true },
-            resourceIndicators: {
-                enabled: true,
-                // НЕ используем defaultResource - это вызывает циклические редиректы
-                async getResourceServerInfo(ctx, resourceIndicator, client) {
-                    // Логируем все параметры для отладки
-                    console.log('[getResourceServerInfo] CALLED! resource:', resourceIndicator, 'client:', client?.clientId, 'ctx.oidc.route:', ctx.oidc?.route);
-                    
-                    // Просто возвращаем JWT конфигурацию для ЛЮБОГО resource
-                    // (для отладки - потом можно добавить проверку)
-                    return {
-                        scope: 'openid profile email offline_access',
-                        audience: resourceIndicator || 'https://la.nqstx.online',
-                        accessTokenTTL: 60 * 60,
-                        accessTokenFormat: 'jwt',
-                        jwt: {
-                            sign: { alg: 'ES256' },
-                        },
-                    };
-                },
-            },
+            // Отключаем resourceIndicators - они вызывают проблемы
+        },
+        // Явно указываем JWT формат для access токенов
+        formats: {
+            AccessToken: 'jwt',
         },
         conformIdTokenClaims: false,
+        // Добавляем claims чтобы токен стал JWT
+        async extraAccessTokenClaims(ctx, token) {
+            console.log('[extraAccessTokenClaims] called for token:', token.jti);
+            return {
+                // Добавляем хотя бы один custom claim - это заставит токен быть JWT
+                custom_aud: 'https://la.nqstx.online',
+            };
+        },
         cookies: {
             names: { interaction: 'oidc:interaction', session: 'oidc:session' },
             keys: [COOKIE_SECRET, RESERVE_ROTATION_KEY],
@@ -96,6 +89,11 @@ export default function buildConfiguration({ pool }) {
         },
         async issueRefreshToken(ctx, client, code) {
             return client.grantTypeAllowed('refresh_token');
+        },
+        // Указываем audience для токенов
+        async audiences(ctx, sub, client) {
+            console.log('[audiences] called for client:', client?.clientId);
+            return ['https://la.nqstx.online'];
         },
         jwks,
     };
