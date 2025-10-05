@@ -17,6 +17,7 @@ export default function buildConfiguration({ pool }) {
         formats: {
             AccessToken: 'jwt',
         },
+        conformIdTokenClaims: false,
         cookies: {
             names: { interaction: 'oidc:interaction', session: 'oidc:session' },
             keys: [COOKIE_SECRET, RESERVE_ROTATION_KEY],
@@ -75,6 +76,9 @@ export default function buildConfiguration({ pool }) {
 
             ctx.status = 302;
             ctx.redirect(to);
+        },
+        async issueRefreshToken(ctx, client, code) {
+            return client.grantTypeAllowed('refresh_token');
         },
         async audiences(ctx, sub, client) {
             return ['https://la.nqstx.online'];
