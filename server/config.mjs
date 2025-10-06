@@ -40,7 +40,14 @@ export default function buildConfiguration({ pool }) {
         interactions: {
             url(ctx, i) {
                 const wantsSignup = ctx.oidc?.params?.screen === 'signup';
-                return `/interaction/${i.uid}${wantsSignup ? '?screen=signup' : ''}`;
+                const prompt = ctx.oidc?.params?.prompt;
+                
+                const params = new URLSearchParams();
+                if (wantsSignup) params.append('screen', 'signup');
+                if (prompt) params.append('prompt', prompt);
+                
+                const queryString = params.toString();
+                return `/interaction/${i.uid}${queryString ? `?${queryString}` : ''}`;
             },
         },
         ttl: {

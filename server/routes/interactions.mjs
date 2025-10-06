@@ -18,9 +18,13 @@ export async function getInteractionLanding(provider, req, res, uid, pool) {
         const { prompt, session, params, grantId } = details;
         const accountId = session?.accountId;
         const clientId = params?.client_id || '';
+        const promptParam = params?.prompt; // может быть 'select_account', 'login' и т.д.
+
+        // Если есть prompt=select_account, НЕ делаем auto-consent - всегда показываем выбор
+        const skipAutoConsent = promptParam === 'select_account' || promptParam === 'login';
 
         // если нужен consent и пользователь уже авторизовывался в этом клиенте — авто-выдаём consent
-        if (prompt?.name === 'consent' && accountId && clientId) {
+        if (prompt?.name === 'consent' && accountId && clientId && !skipAutoConsent) {
             // проверим users.apps
             const u = await pool.query('SELECT apps FROM users WHERE id = $1', [accountId]);
             const apps = (u.rows[0]?.apps || []);
@@ -51,9 +55,13 @@ export async function getInteractionLanding(provider, req, res, uid, pool) {
             }
         }
 
-        // дефолт: ведём на /int/[uid] (и добавляем ?screen=signup при необходимости)
+        // дефолт: ведём на /int/[uid] (и добавляем ?screen=signup или ?prompt=... при необходимости)
         const wantsSignup = details.params?.screen === 'signup';
-        const extra = wantsSignup ? '?screen=signup' : '';
+        const queryParams = new URLSearchParams();
+        if (wantsSignup) queryParams.append('screen', 'signup');
+        if (promptParam) queryParams.append('prompt', promptParam);
+        const queryString = queryParams.toString();
+        const extra = queryString ? `?${queryString}` : '';
         res.writeHead(302, { Location: `/int/${details.uid}${extra}` });
         res.end();
     } catch {
