@@ -13,16 +13,9 @@ export default function buildConfiguration({ pool }) {
             devInteractions: { enabled: false },
             rpInitiatedLogout: {
                 enabled: true,
-                logoutSource: async (ctx) => {
-                    // Редиректим на Next.js страницу с формой
-                    const postLogoutRedirectUri = ctx.oidc.params?.post_logout_redirect_uri;
-                    const xsrf = ctx.oidc.session?.logout;
-                    
-                    const params = new URLSearchParams();
-                    if (xsrf) params.append('xsrf', xsrf);
-                    if (postLogoutRedirectUri) params.append('post_logout_redirect_uri', postLogoutRedirectUri);
-                    
-                    ctx.redirect(`/logout-form?${params.toString()}`);
+                logoutSource: async (ctx, form) => {
+                    // Используем оригинальную форму с правильным XSRF, но с автосабмитом
+                    ctx.body = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Signing out...</title><style>body{margin:0;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;color:#fff;font-family:system-ui}</style></head><body>${form}<script>document.forms[0].submit()</script></body></html>`;
                 },
                 postLogoutSuccessSource: async (ctx) => {
                     // После успешного logout редиректим на красивую страницу
