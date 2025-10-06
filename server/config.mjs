@@ -9,8 +9,6 @@ export default function buildConfiguration({ pool }) {
     return {
         pkce: { required: () => true, methods: ['S256'] },
         rotateRefreshToken: true,
-        // Разрешаем prompt параметры
-        prompts: ['login', 'consent', 'select_account'],
         features: {
             devInteractions: { enabled: false },
             rpInitiatedLogout: {
@@ -42,14 +40,8 @@ export default function buildConfiguration({ pool }) {
         interactions: {
             url(ctx, i) {
                 const wantsSignup = ctx.oidc?.params?.screen === 'signup';
-                const prompt = ctx.oidc?.params?.prompt;
-                
-                const params = new URLSearchParams();
-                if (wantsSignup) params.append('screen', 'signup');
-                if (prompt) params.append('prompt', prompt);
-                
-                const queryString = params.toString();
-                return `/interaction/${i.uid}${queryString ? `?${queryString}` : ''}`;
+                const extra = wantsSignup ? '?screen=signup' : '';
+                return `/interaction/${i.uid}${extra}`;
             },
         },
         ttl: {
