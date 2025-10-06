@@ -9,6 +9,8 @@ export default function buildConfiguration({ pool }) {
     return {
         pkce: { required: () => true, methods: ['S256'] },
         rotateRefreshToken: true,
+        // Разрешаем prompt параметры
+        prompts: ['login', 'consent', 'select_account'],
         features: {
             devInteractions: { enabled: false },
             rpInitiatedLogout: {
