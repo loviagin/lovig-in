@@ -11,7 +11,18 @@ export default function buildConfiguration({ pool }) {
         rotateRefreshToken: true,
         features: {
             devInteractions: { enabled: false },
-            rpInitiatedLogout: { enabled: true },
+            rpInitiatedLogout: {
+                enabled: true,
+                postLogoutSuccessSource: async (ctx) => {
+                    // После успешного logout показываем красивую страницу
+                    const postLogoutRedirectUri = ctx.oidc.params?.post_logout_redirect_uri;
+                    if (postLogoutRedirectUri) {
+                        ctx.redirect(`/logout?post_logout_redirect_uri=${encodeURIComponent(postLogoutRedirectUri)}`);
+                    } else {
+                        ctx.body = 'You have been logged out successfully.';
+                    }
+                },
+            },
             revocation: { enabled: true },
             // Отключаем resourceIndicators - они вызывают проблемы
         },
