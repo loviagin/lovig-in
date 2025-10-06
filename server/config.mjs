@@ -13,8 +13,19 @@ export default function buildConfiguration({ pool }) {
             devInteractions: { enabled: false },
             rpInitiatedLogout: {
                 enabled: true,
+                logoutSource: async (ctx) => {
+                    // Редиректим на Next.js страницу с формой
+                    const postLogoutRedirectUri = ctx.oidc.params?.post_logout_redirect_uri;
+                    const xsrf = ctx.oidc.session?.logout;
+                    
+                    const params = new URLSearchParams();
+                    if (xsrf) params.append('xsrf', xsrf);
+                    if (postLogoutRedirectUri) params.append('post_logout_redirect_uri', postLogoutRedirectUri);
+                    
+                    ctx.redirect(`/logout-form?${params.toString()}`);
+                },
                 postLogoutSuccessSource: async (ctx) => {
-                    // После успешного logout показываем красивую страницу
+                    // После успешного logout редиректим на красивую страницу
                     const postLogoutRedirectUri = ctx.oidc.params?.post_logout_redirect_uri;
                     if (postLogoutRedirectUri) {
                         ctx.redirect(`/logout?post_logout_redirect_uri=${encodeURIComponent(postLogoutRedirectUri)}`);
