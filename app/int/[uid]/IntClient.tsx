@@ -99,7 +99,7 @@ export default function IntClient({ uid }: { uid: string }) {
     const appName = details.clientName || details.params.client_id;
     const clientId = details.params.client_id;
     const logoByClient: Record<string, { light: string; dark: string }> = {
-        'demo-ios': { light: '/logos/learnsy.webp', dark: '/logos/learnsy.webp' },
+        'learnsy-ios': { light: '/logos/learnsy.webp', dark: '/logos/learnsy.webp' },
     };
     const logo = logoByClient[clientId] ?? { light: '/logo.webp', dark: '/logoWhite.webp' };
 

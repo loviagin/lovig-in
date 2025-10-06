@@ -11,7 +11,7 @@ export default [
     },
     {
         client_id: 'learnsy-ios',
-        client_name: 'Skillify iOS App',
+        client_name: 'Learnsy App',
         application_type: 'native',
         redirect_uris: ['com.lovigin.ios.Skillify://oidc'],
         post_logout_redirect_uris: ['com.lovigin.ios.Skillify://logout'],
