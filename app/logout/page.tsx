@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
 
-export default function LogoutPage() {
+function LogoutContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -36,6 +36,14 @@ export default function LogoutPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LogoutPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LogoutContent />
+    </Suspense>
   );
 }
 
