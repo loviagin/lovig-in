@@ -80,7 +80,6 @@ export default function buildConfiguration({ pool }) {
         },
         // Указываем audience для токенов
         async audiences(ctx, sub, client) {
-            console.log('[audiences] called for client:', client?.clientId);
             return ['https://la.nqstx.online'];
         },
         // JWT конфигурация для подписи токенов
