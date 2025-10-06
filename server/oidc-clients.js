@@ -30,5 +30,7 @@ export default [
         response_types: ['code'],
         grant_types: ['authorization_code', 'refresh_token'],
         id_token_signed_response_alg: 'ES256',
+        // Явно указываем, что хотим JWT access токены
+        access_token_format: 'jwt',
     },
 ];
