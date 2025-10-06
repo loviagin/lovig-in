@@ -14,7 +14,7 @@ export default [
         client_name: 'Skillify iOS App',
         application_type: 'native',
         redirect_uris: ['com.lovigin.ios.Skillify://oidc'],
-        post_logout_redirect_uris: ['https://auth.lovig.in'],
+        post_logout_redirect_uris: ['com.lovigin.ios.Skillify://logout'],
         token_endpoint_auth_method: 'none',
         response_types: ['code'],
         grant_types: ['authorization_code', 'refresh_token'],
