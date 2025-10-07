@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
       // OIDC core эндпоинты: /.well-known, /auth, /token, /jwks, /me, /session/end и т.д.
       { source: '/api/oidc/:path*', destination: 'http://localhost:4400/:path*' },
 
+      // API для пользователей
+      { source: '/api/users/:path*', destination: 'http://localhost:4400/api/users/:path*' },
+
       // Dev interactions экран (и вообще interaction flow)
       { source: '/interaction/:path*', destination: 'http://localhost:4400/interaction/:path*' },
 
