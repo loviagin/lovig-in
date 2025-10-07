@@ -16,7 +16,7 @@ import {
 import { googleStart, googleCallback } from './server/routes/google.mjs';
 import { postForgot, postReset, getInspect } from './server/routes/password.mjs';
 import { appleStart, appleCallback } from './server/routes/apple.mjs';
-import { getAllUsers, getUsersCount } from './server/routes/users.mjs';
+import { getAllUsers, getUsersCount, createUser } from './server/routes/users.mjs';
 
 async function main() {
     const pool = new Pool({ connectionString: DATABASE_URL });
@@ -123,6 +123,9 @@ state=${query.state}
         }
         if (req.method === 'GET' && pathname === '/api/users/count') {
             return await getUsersCount(pool, req, res);
+        }
+        if (req.method === 'POST' && pathname === '/api/users/create') {
+            return await createUser(pool, req, res);
         }
 
         // всё остальное — в provider
