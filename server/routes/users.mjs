@@ -79,9 +79,9 @@ export async function createUser(pool, req, res) {
         } = body;
 
         // Валидация обязательных полей
-        if (!email || !password) {
+        if (!email) {
             res.writeHead(400, { 'content-type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Email and password are required' }));
+            res.end(JSON.stringify({ error: 'Email is required' }));
             return;
         }
 
@@ -100,9 +100,12 @@ export async function createUser(pool, req, res) {
             return;
         }
 
-        // Хешируем пароль
-        const { default: argon2 } = await import('argon2');
-        const passwordHash = await argon2.hash(password);
+        // Хешируем пароль только если он передан
+        let passwordHash = null;
+        if (password) {
+            const { default: argon2 } = await import('argon2');
+            passwordHash = await argon2.hash(password);
+        }
 
         // Создаем пользователя
         const { rows } = await pool.query(`
