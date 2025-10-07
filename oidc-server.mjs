@@ -16,6 +16,7 @@ import {
 import { googleStart, googleCallback } from './server/routes/google.mjs';
 import { postForgot, postReset, getInspect } from './server/routes/password.mjs';
 import { appleStart, appleCallback } from './server/routes/apple.mjs';
+import { getAllUsers, getUsersCount } from './server/routes/users.mjs';
 
 async function main() {
     const pool = new Pool({ connectionString: DATABASE_URL });
@@ -114,6 +115,14 @@ state=${query.state}
             console.log('[apple cb] HIT', req.method, pathname);
             await appleCallback(provider, pool, req, res); // сам разберётся POST/GET
             return;
+        }
+
+        // API endpoints for users
+        if (req.method === 'GET' && pathname === '/api/users/all') {
+            return await getAllUsers(pool, req, res);
+        }
+        if (req.method === 'GET' && pathname === '/api/users/count') {
+            return await getUsersCount(pool, req, res);
         }
 
         // всё остальное — в provider
