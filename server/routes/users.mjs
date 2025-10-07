@@ -6,24 +6,18 @@ export async function getAllUsers(pool, req, res) {
         log.info('[getAllUsers] GET /api/users/all');
         
         const { rows } = await pool.query(`
-            SELECT 
-                id,
-                name,
-                email,
-                email_verified,
-                created_at,
-                updated_at,
-                apps
-            FROM users 
+            SELECT * FROM users 
             ORDER BY created_at DESC
         `);
         
-        // Убираем чувствительные данные для безопасности
-        const safeUsers = rows.map(user => ({
+        // Возвращаем все поля из БД
+        const users = rows.map(user => ({
             id: user.id,
             name: user.name,
             email: user.email,
+            passwordHash: user.password_hash,
             emailVerified: user.email_verified,
+            providers: user.providers,
             createdAt: user.created_at,
             updatedAt: user.updated_at,
             apps: user.apps || []
@@ -33,7 +27,7 @@ export async function getAllUsers(pool, req, res) {
             'content-type': 'application/json',
             'cache-control': 'no-store'
         });
-        res.end(JSON.stringify({ users: safeUsers }));
+        res.end(JSON.stringify({ users }));
         
     } catch (e) {
         log.error('[getAllUsers] failed', e);
