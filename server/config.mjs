@@ -34,7 +34,8 @@ export default function buildConfiguration({ pool }) {
         cookies: {
             names: { interaction: 'oidc:interaction', session: 'oidc:session' },
             keys: [COOKIE_SECRET, RESERVE_ROTATION_KEY],
-            short: { secure: true, sameSite: 'none', domain: new URL(ISSUER).host.split(':')[0], path: '/' },
+            // Изменил sameSite на 'lax' для interaction cookies - 'none' блокируется iOS Safari
+            short: { secure: true, sameSite: 'lax', domain: new URL(ISSUER).host.split(':')[0], path: '/' },
             long: { secure: true, sameSite: 'lax', domain: new URL(ISSUER).host.split(':')[0], path: '/' },
         },
         interactions: {
