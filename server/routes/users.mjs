@@ -133,3 +133,40 @@ export async function createUser(pool, req, res) {
         res.end(JSON.stringify({ error: 'Failed to create user' }));
     }
 }
+
+// DELETE /api/users/:id - удалить пользователя по ID
+export async function deleteUser(pool, req, res, userId) {
+    try {
+        log.info('[deleteUser] DELETE /api/users/' + userId);
+        
+        // Проверяем, что пользователь существует
+        const { rows } = await pool.query('SELECT id, name, email FROM users WHERE id = $1', [userId]);
+        if (rows.length === 0) {
+            res.writeHead(404, { 'content-type': 'application/json' });
+            res.end(JSON.stringify({ error: 'User not found' }));
+            return;
+        }
+
+        const user = rows[0];
+        
+        // Удаляем пользователя
+        await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+        
+        log.info('[deleteUser] User deleted successfully', { userId, email: user.email });
+        
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ 
+            message: 'User deleted successfully',
+            deletedUser: {
+                id: user.id,
+                name: user.name,
+                email: user.email
+            }
+        }));
+        
+    } catch (e) {
+        log.error('[deleteUser] failed', e);
+        res.writeHead(500, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to delete user' }));
+    }
+}
